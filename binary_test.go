@@ -1,18 +1,20 @@
 package render_test
 
 import (
+	"encoding"
 	"errors"
 	"testing"
 
 	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type mockBinaryMarshaler struct {
 	data []byte
 	err  error
 }
+
+var _ encoding.BinaryMarshaler = (*mockBinaryMarshaler)(nil)
 
 func (mbm *mockBinaryMarshaler) MarshalBinary() ([]byte, error) {
 	return mbm.data, mbm.err
@@ -57,16 +59,12 @@ func TestBinary_Render(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &render.Binary{}
-
-			var err error
-			var got string
 			w := &mockWriter{WriteErr: tt.writeErr}
 
-			err = b.Render(w, tt.value)
-			got = w.String()
+			err := b.Render(w, tt.value)
+			got := w.String()
 
 			if tt.wantErr != "" {
-				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			}
 			for _, e := range tt.wantErrIs {
@@ -74,7 +72,7 @@ func TestBinary_Render(t *testing.T) {
 			}
 
 			if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})

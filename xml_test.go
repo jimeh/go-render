@@ -3,12 +3,32 @@ package render_test
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"testing"
 
 	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+type mockXMLMarshaler struct {
+	elm string
+	err error
+}
+
+var _ xml.Marshaler = (*mockXMLMarshaler)(nil)
+
+func (mxm *mockXMLMarshaler) MarshalXML(
+	e *xml.Encoder,
+	start xml.StartElement,
+) error {
+	err := e.EncodeElement(mxm.elm, start)
+
+	if mxm.err != nil {
+		return mxm.err
+	}
+
+	return err
+}
 
 func TestXML_Render(t *testing.T) {
 	tests := []struct {
@@ -33,15 +53,14 @@ func TestXML_Render(t *testing.T) {
 		{
 			name:   "simple object with pretty",
 			pretty: true,
-			indent: "    ",
 			value: struct {
 				XMLName xml.Name `xml:"user"`
 				Age     int      `xml:"age"`
 			}{Age: 30},
-			want: "<user>\n    <age>30</age>\n</user>",
+			want: "<user>\n  <age>30</age>\n</user>",
 		},
 		{
-			name:   "with prefix and indent",
+			name:   "pretty with prefix and indent",
 			pretty: true,
 			prefix: "//",
 			indent: "\t",
@@ -50,6 +69,28 @@ func TestXML_Render(t *testing.T) {
 				Age     int      `xml:"age"`
 			}{Age: 30},
 			want: "//<user>\n//\t<age>30</age>\n//</user>",
+		},
+		{
+			name:   "prefix and indent without pretty",
+			pretty: false,
+			prefix: "//",
+			indent: "\t",
+			value: struct {
+				XMLName xml.Name `xml:"user"`
+				Age     int      `xml:"age"`
+			}{Age: 30},
+			want: `<user><age>30</age></user>`,
+		},
+		{
+			name:  "implements xml.Marshaler",
+			value: &mockXMLMarshaler{elm: "test string"},
+			want:  "<mockXMLMarshaler>test string</mockXMLMarshaler>",
+		},
+		{
+			name:      "error from xml.Marshaler",
+			value:     &mockXMLMarshaler{err: errors.New("mock error")},
+			wantErr:   "render: mock error",
+			wantErrIs: []error{render.Err},
 		},
 		{
 			name:      "invalid value",
@@ -67,12 +108,12 @@ func TestXML_Render(t *testing.T) {
 				Prefix: tt.prefix,
 				Indent: tt.indent,
 			}
-
 			var buf bytes.Buffer
+
 			err := x.Render(&buf, tt.value)
+			got := buf.String()
 
 			if tt.wantErr != "" {
-				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			}
 			for _, e := range tt.wantErrIs {
@@ -80,8 +121,7 @@ func TestXML_Render(t *testing.T) {
 			}
 
 			if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				require.NoError(t, err)
-				got := buf.String()
+				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})

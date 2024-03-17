@@ -2,16 +2,18 @@ package render_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type mockStringer struct {
 	value string
 }
+
+var _ fmt.Stringer = (*mockStringer)(nil)
 
 func (ms *mockStringer) String() string {
 	return ms.value
@@ -47,16 +49,12 @@ func TestStringer_Render(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &render.Stringer{}
-
-			var err error
-			var got string
 			w := &mockWriter{WriteErr: tt.writeErr}
 
-			err = s.Render(w, tt.value)
-			got = w.String()
+			err := s.Render(w, tt.value)
+			got := w.String()
 
 			if tt.wantErr != "" {
-				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			}
 			for _, e := range tt.wantErrIs {
@@ -64,7 +62,7 @@ func TestStringer_Render(t *testing.T) {
 			}
 
 			if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})

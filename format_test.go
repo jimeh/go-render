@@ -7,7 +7,6 @@ import (
 
 	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFormatRenderer_Render(t *testing.T) {
@@ -46,7 +45,7 @@ func TestFormatRenderer_Render(t *testing.T) {
 			renderers: map[string]render.Renderer{},
 			format:    "unknown",
 			value:     struct{}{},
-			wantErrIs: []error{render.Err, render.ErrCannotRender},
+			wantErrIs: []error{render.Err, render.ErrUnsupportedFormat},
 		},
 	}
 	for _, tt := range tests {
@@ -54,13 +53,12 @@ func TestFormatRenderer_Render(t *testing.T) {
 			fr := &render.FormatRenderer{
 				Renderers: tt.renderers,
 			}
-
 			var buf bytes.Buffer
+
 			err := fr.Render(&buf, tt.format, tt.value)
 			got := buf.String()
 
 			if tt.wantErr != "" {
-				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			}
 			for _, e := range tt.wantErrIs {
@@ -68,7 +66,7 @@ func TestFormatRenderer_Render(t *testing.T) {
 			}
 
 			if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})

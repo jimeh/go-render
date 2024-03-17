@@ -8,13 +8,14 @@ import (
 
 	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type mockWriterTo struct {
 	value string
 	err   error
 }
+
+var _ io.WriterTo = (*mockWriterTo)(nil)
 
 func (m *mockWriterTo) WriteTo(w io.Writer) (int64, error) {
 	n, err := w.Write([]byte(m.value))
@@ -59,16 +60,12 @@ func TestWriterTo_Render(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wt := &render.WriterTo{}
-
-			var err error
-			var got string
 			w := &bytes.Buffer{}
 
-			err = wt.Render(w, tt.value)
-			got = w.String()
+			err := wt.Render(w, tt.value)
+			got := w.String()
 
 			if tt.wantErr != "" {
-				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			}
 			for _, e := range tt.wantErrIs {
@@ -76,7 +73,7 @@ func TestWriterTo_Render(t *testing.T) {
 			}
 
 			if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})

@@ -2,12 +2,24 @@ package render_test
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 
 	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
+
+type mockYAMLMarshaler struct {
+	val any
+	err error
+}
+
+var _ yaml.Marshaler = (*mockYAMLMarshaler)(nil)
+
+func (m *mockYAMLMarshaler) MarshalYAML() (any, error) {
+	return m.val, m.err
+}
 
 func TestYAML_Render(t *testing.T) {
 	tests := []struct {
@@ -15,6 +27,8 @@ func TestYAML_Render(t *testing.T) {
 		indent    int
 		value     interface{}
 		want      string
+		wantErr   string
+		wantErrIs []error
 		wantPanic string
 	}{
 		{
@@ -45,13 +59,23 @@ func TestYAML_Render(t *testing.T) {
 			want: "user:\n    age: 30\n    name: John Doe\n",
 		},
 		{
+			name:  "implements yaml.Marshaler",
+			value: &mockYAMLMarshaler{val: map[string]int{"age": 30}},
+			want:  "age: 30\n",
+		},
+		{
+			name:      "error from yaml.Marshaler",
+			value:     &mockYAMLMarshaler{err: errors.New("mock error")},
+			wantErr:   "render: mock error",
+			wantErrIs: []error{render.Err},
+		},
+		{
 			name:      "invalid value",
 			indent:    0,
 			value:     make(chan int),
 			wantPanic: "cannot marshal type: chan int",
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			j := &render.YAML{
@@ -70,11 +94,21 @@ func TestYAML_Render(t *testing.T) {
 				err = j.Render(&buf, tt.value)
 			}()
 
+			got := buf.String()
+
 			if tt.wantPanic != "" {
 				assert.Equal(t, tt.wantPanic, panicRes)
-			} else {
-				require.NoError(t, err)
-				got := buf.String()
+			}
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			}
+			for _, e := range tt.wantErrIs {
+				assert.ErrorIs(t, err, e)
+			}
+
+			if tt.wantPanic == "" &&
+				tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})

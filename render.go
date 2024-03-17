@@ -48,21 +48,22 @@ var (
 		Renderers: []Renderer{DefaultStringer, DefaultWriterTo},
 	}
 
-	// DefaultBinaryMarshaler is the default binary marshaler renderer. It
+	// DefaultBinary is the default binary marshaler renderer. It
 	// renders values using the encoding.BinaryMarshaler interface.
-	DefaultBinaryMarshaler = &Binary{}
+	DefaultBinary = &Binary{}
 
 	// DefaultRenderer is the default renderer, used by the package level Render
-	// function. It supports the "json", "xml", "yaml", "text", "binary"
-	// formats.
+	// function.
 	DefaultRenderer = &FormatRenderer{map[string]Renderer{
+		"bin":    DefaultBinary,
+		"binary": DefaultBinary,
 		"json":   DefaultJSON,
+		"plain":  DefaultText,
+		"text":   DefaultText,
+		"txt":    DefaultText,
 		"xml":    DefaultXML,
 		"yaml":   DefaultYAML,
 		"yml":    DefaultYAML,
-		"text":   DefaultText,
-		"binary": DefaultBinaryMarshaler,
-		"bin":    DefaultBinaryMarshaler,
 	}}
 )
 
@@ -81,10 +82,13 @@ var (
 //   - "text": Renders values using the fmt.Stringer and io.WriterTo interfaces.
 //     This means a value must implement either the fmt.Stringer or io.WriterTo
 //     interfaces to be rendered.
+//   - "txt": Alias for "text".
+//   - "plain": Alias for "text".
 //   - "binary": Renders values using the encoding.BinaryMarshaler interface.
 //   - "bin": Alias for "binary".
 //
-// If the format is not supported, a ErrCannotRender error will be returned.
+// If the format is not supported, a ErrUnsupportedFormat error will be
+// returned.
 func Render(w io.Writer, format string, v any) error {
 	return DefaultRenderer.Render(w, format, v)
 }

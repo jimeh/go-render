@@ -19,7 +19,7 @@ func (s *Stringer) Render(w io.Writer, v any) error {
 		return ErrCannotRender
 	}
 
-	_, err := fmt.Fprint(w, x.String())
+	_, err := w.Write([]byte(x.String()))
 	if err != nil {
 		return fmt.Errorf("%w: %w", Err, err)
 	}

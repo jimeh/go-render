@@ -7,7 +7,6 @@ import (
 
 	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMultiRenderer_Render(t *testing.T) {
@@ -88,13 +87,12 @@ func TestMultiRenderer_Render(t *testing.T) {
 			mr := &render.MultiRenderer{
 				Renderers: tt.renderers,
 			}
-
 			var buf bytes.Buffer
+
 			err := mr.Render(&buf, tt.value)
 			got := buf.String()
 
 			if tt.wantErr != "" {
-				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			}
 			for _, e := range tt.wantErrIs {
@@ -102,7 +100,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 			}
 
 			if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})
