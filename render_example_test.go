@@ -10,35 +10,21 @@ import (
 	"github.com/jimeh/go-render"
 )
 
-type User struct {
-	Name  string   `json:"name" yaml:"name" xml:"name"`
-	Age   int      `json:"age" yaml:"age" xml:"age"`
-	Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
-	Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
-
-	XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
-}
-
-func (u *User) String() string {
-	return fmt.Sprintf(
-		"%s (%d): %s",
-		u.Name, u.Age, strings.Join(u.Tags, ", "),
-	)
-}
-
-type Role struct {
-	Name string `json:"name" yaml:"name" xml:"name"`
-	Icon string `json:"icon" yaml:"icon" xml:"icon"`
-}
-
-func (r *Role) WriteTo(w io.Writer) (int64, error) {
-	s := fmt.Sprintf("%s (%s)", r.Name, r.Icon)
-	n, err := w.Write([]byte(s))
-
-	return int64(n), err
-}
-
 func ExampleRender_json() {
+	type Role struct {
+		Name string `json:"name" yaml:"name" xml:"name"`
+		Icon string `json:"icon" yaml:"icon" xml:"icon"`
+	}
+
+	type User struct {
+		Name  string   `json:"name" yaml:"name" xml:"name"`
+		Age   int      `json:"age" yaml:"age" xml:"age"`
+		Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
+		Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
+
+		XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
+	}
+
 	data := &User{
 		Name: "John Doe",
 		Age:  30,
@@ -81,6 +67,20 @@ func ExampleRender_json() {
 }
 
 func ExampleRender_yaml() {
+	type Role struct {
+		Name string `json:"name" yaml:"name" xml:"name"`
+		Icon string `json:"icon" yaml:"icon" xml:"icon"`
+	}
+
+	type User struct {
+		Name  string   `json:"name" yaml:"name" xml:"name"`
+		Age   int      `json:"age" yaml:"age" xml:"age"`
+		Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
+		Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
+
+		XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
+	}
+
 	data := &User{
 		Name: "John Doe",
 		Age:  30,
@@ -115,6 +115,20 @@ func ExampleRender_yaml() {
 }
 
 func ExampleRender_xml() {
+	type Role struct {
+		Name string `json:"name" yaml:"name" xml:"name"`
+		Icon string `json:"icon" yaml:"icon" xml:"icon"`
+	}
+
+	type User struct {
+		Name  string   `json:"name" yaml:"name" xml:"name"`
+		Age   int      `json:"age" yaml:"age" xml:"age"`
+		Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
+		Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
+
+		XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
+	}
+
 	data := &User{
 		Name: "John Doe",
 		Age:  30,
@@ -152,16 +166,44 @@ func ExampleRender_xml() {
 	// </user>
 }
 
+type Role struct {
+	Name string `json:"name" yaml:"name" xml:"name"`
+	Icon string `json:"icon" yaml:"icon" xml:"icon"`
+}
+
+func (r *Role) WriteTo(w io.Writer) (int64, error) {
+	s := fmt.Sprintf("%s (%s)", r.Name, r.Icon)
+	n, err := w.Write([]byte(s))
+
+	return int64(n), err
+}
+
+type User struct {
+	Name  string   `json:"name" yaml:"name" xml:"name"`
+	Age   int      `json:"age" yaml:"age" xml:"age"`
+	Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
+	Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
+
+	XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
+}
+
+func (u *User) String() string {
+	return fmt.Sprintf(
+		"%s (%d): %s",
+		u.Name, u.Age, strings.Join(u.Tags, ", "),
+	)
+}
+
 func ExampleRender_textViaStringer() {
 	// The User struct has a String method which returns a string representation
 	// of a user:
 	//
-	//  func (u *User) String() string {
+	//	func (u *User) String() string {
 	//		return fmt.Sprintf(
 	//			"%s (%d): %s",
 	//			u.Name, u.Age, strings.Join(u.Tags, ", "),
 	//		)
-	//  }
+	//	}
 
 	data := &User{
 		Name: "John Doe",
