@@ -69,14 +69,14 @@ func TestJSON_Render(t *testing.T) {
 		{
 			name:      "error from json.Marshaler",
 			value:     &mockJSONMarshaler{err: errors.New("marshal error!!1")},
-			wantErrIs: []error{render.Err},
+			wantErrIs: []error{render.Err, render.ErrFailed},
 		},
 		{
 			name:      "invalid value",
 			pretty:    false,
 			value:     make(chan int),
-			wantErr:   "render: json: unsupported type: chan int",
-			wantErrIs: []error{render.Err},
+			wantErr:   "render: failed: json: unsupported type: chan int",
+			wantErrIs: []error{render.Err, render.ErrFailed},
 		},
 	}
 	for _, tt := range tests {

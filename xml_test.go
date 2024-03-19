@@ -89,15 +89,15 @@ func TestXML_Render(t *testing.T) {
 		{
 			name:      "error from xml.Marshaler",
 			value:     &mockXMLMarshaler{err: errors.New("mock error")},
-			wantErr:   "render: mock error",
-			wantErrIs: []error{render.Err},
+			wantErr:   "render: failed: mock error",
+			wantErrIs: []error{render.Err, render.ErrFailed},
 		},
 		{
 			name:      "invalid value",
 			pretty:    false,
 			value:     make(chan int),
-			wantErr:   "render: xml: unsupported type: chan int",
-			wantErrIs: []error{render.Err},
+			wantErr:   "render: failed: xml: unsupported type: chan int",
+			wantErrIs: []error{render.Err, render.ErrFailed},
 		},
 	}
 

@@ -1,14 +1,24 @@
 package render_test
 
 import (
-	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"testing"
 
 	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
 )
+
+type mockStringer struct {
+	value string
+}
+
+var _ fmt.Stringer = (*mockStringer)(nil)
+
+func (ms *mockStringer) String() string {
+	return ms.value
+}
 
 type mockWriterTo struct {
 	value string
@@ -27,7 +37,7 @@ func (m *mockWriterTo) WriteTo(w io.Writer) (int64, error) {
 	return int64(n), err
 }
 
-func TestWriterTo_Render(t *testing.T) {
+func TestText_Render(t *testing.T) {
 	tests := []struct {
 		name      string
 		writeErr  error
@@ -37,32 +47,44 @@ func TestWriterTo_Render(t *testing.T) {
 		wantErrIs []error
 	}{
 		{
+			name:  "implements fmt.Stringer",
+			value: &mockStringer{value: "test string"},
+			want:  "test string",
+		},
+		{
+			name:      "error writing to writer with fmt.Stringer",
+			writeErr:  errors.New("write error!!1"),
+			value:     &mockStringer{value: "test string"},
+			wantErr:   "render: failed: write error!!1",
+			wantErrIs: []error{render.Err, render.ErrFailed},
+		},
+		{
 			name:  "implements io.WriterTo",
 			value: &mockWriterTo{value: "test string"},
 			want:  "test string",
 		},
 		{
-			name:      "does not implement io.WriterTo",
+			name:      "does not implement fmt.Stringer or io.WriterTo",
 			value:     struct{}{},
 			wantErr:   "render: cannot render",
 			wantErrIs: []error{render.Err, render.ErrCannotRender},
 		},
 		{
-			name: "error writing to writer",
+			name: "error writing to writer with io.WriterTo",
 			value: &mockWriterTo{
 				value: "test string",
 				err:   errors.New("WriteTo error!!1"),
 			},
-			wantErr:   "render: WriteTo error!!1",
-			wantErrIs: []error{render.Err},
+			wantErr:   "render: failed: WriteTo error!!1",
+			wantErrIs: []error{render.Err, render.ErrFailed},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			wt := &render.WriterTo{}
-			w := &bytes.Buffer{}
+			s := &render.Text{}
+			w := &mockWriter{WriteErr: tt.writeErr}
 
-			err := wt.Render(w, tt.value)
+			err := s.Render(w, tt.value)
 			got := w.String()
 
 			if tt.wantErr != "" {

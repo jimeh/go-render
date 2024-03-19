@@ -39,7 +39,10 @@ func ExampleRender_json() {
 	buf := &bytes.Buffer{}
 	err := render.Render(buf, "json", data)
 	if err != nil {
-		panic(err)
+		fmt.Printf("err: %s\n", err)
+
+		return
+		// panic(err)
 	}
 	fmt.Println(buf.String())
 
@@ -139,9 +142,13 @@ func ExampleRender_xml() {
 		Tags: []string{"golang", "json", "yaml", "toml"},
 	}
 
+	// Create a new renderer that supports XML in addition to default JSON, YAML
+	// and Text.
+	r := render.MustNew("json", "text", "xml", "yaml")
+
 	// Render the object to XML.
 	buf := &bytes.Buffer{}
-	err := render.Render(buf, "xml", data)
+	err := r.Render(buf, "xml", data)
 	if err != nil {
 		panic(err)
 	}

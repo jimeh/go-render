@@ -21,7 +21,7 @@ type JSON struct {
 	Indent string
 }
 
-var _ Renderer = (*JSON)(nil)
+var _ FormatRenderer = (*JSON)(nil)
 
 // Render marshals the given value to JSON.
 func (j *JSON) Render(w io.Writer, v any) error {
@@ -38,7 +38,7 @@ func (j *JSON) Render(w io.Writer, v any) error {
 
 	err := enc.Encode(v)
 	if err != nil {
-		return fmt.Errorf("%w: %w", Err, err)
+		return fmt.Errorf("%w: %w", ErrFailed, err)
 	}
 
 	return nil

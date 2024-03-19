@@ -14,7 +14,7 @@ type YAML struct {
 	Indent int
 }
 
-var _ Renderer = (*YAML)(nil)
+var _ FormatRenderer = (*YAML)(nil)
 
 // Render marshals the given value to YAML.
 func (j *YAML) Render(w io.Writer, v any) error {
@@ -29,7 +29,7 @@ func (j *YAML) Render(w io.Writer, v any) error {
 
 	err := enc.Encode(v)
 	if err != nil {
-		return fmt.Errorf("%w: %w", Err, err)
+		return fmt.Errorf("%w: %w", ErrFailed, err)
 	}
 
 	return nil

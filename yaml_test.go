@@ -66,8 +66,8 @@ func TestYAML_Render(t *testing.T) {
 		{
 			name:      "error from yaml.Marshaler",
 			value:     &mockYAMLMarshaler{err: errors.New("mock error")},
-			wantErr:   "render: mock error",
-			wantErrIs: []error{render.Err},
+			wantErr:   "render: failed: mock error",
+			wantErrIs: []error{render.Err, render.ErrFailed},
 		},
 		{
 			name:      "invalid value",

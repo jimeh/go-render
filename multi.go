@@ -7,10 +7,10 @@ import (
 
 // MultiRenderer is a renderer that tries multiple renderers until one succeeds.
 type MultiRenderer struct {
-	Renderers []Renderer
+	Renderers []FormatRenderer
 }
 
-var _ Renderer = (*MultiRenderer)(nil)
+var _ FormatRenderer = (*MultiRenderer)(nil)
 
 // Render tries each renderer in order until one succeeds. If none succeed,
 // ErrCannotRender is returned. If a renderer returns an error that is not

@@ -45,15 +45,15 @@ func TestBinary_Render(t *testing.T) {
 				data: []byte("test string"),
 				err:  errors.New("marshal error!!1"),
 			},
-			wantErr:   "render: marshal error!!1",
-			wantErrIs: []error{render.Err},
+			wantErr:   "render: failed: marshal error!!1",
+			wantErrIs: []error{render.Err, render.ErrFailed},
 		},
 		{
 			name:      "error writing to writer",
 			writeErr:  errors.New("write error!!1"),
 			value:     &mockBinaryMarshaler{data: []byte("test string")},
-			wantErr:   "render: write error!!1",
-			wantErrIs: []error{render.Err},
+			wantErr:   "render: failed: write error!!1",
+			wantErrIs: []error{render.Err, render.ErrFailed},
 		},
 	}
 	for _, tt := range tests {

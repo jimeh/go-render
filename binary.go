@@ -10,7 +10,7 @@ import (
 // interface.
 type Binary struct{}
 
-var _ Renderer = (*Binary)(nil)
+var _ FormatRenderer = (*Binary)(nil)
 
 // Render writes result of calling MarshalBinary() on v. If v does not implment
 // encoding.BinaryMarshaler the ErrCannotRander error will be returned.
@@ -22,12 +22,12 @@ func (bm *Binary) Render(w io.Writer, v any) error {
 
 	b, err := x.MarshalBinary()
 	if err != nil {
-		return fmt.Errorf("%w: %w", Err, err)
+		return fmt.Errorf("%w: %w", ErrFailed, err)
 	}
 
 	_, err = w.Write(b)
 	if err != nil {
-		return fmt.Errorf("%w: %w", Err, err)
+		return fmt.Errorf("%w: %w", ErrFailed, err)
 	}
 
 	return nil

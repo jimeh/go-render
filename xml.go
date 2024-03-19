@@ -21,7 +21,7 @@ type XML struct {
 	Indent string
 }
 
-var _ Renderer = (*XML)(nil)
+var _ FormatRenderer = (*XML)(nil)
 
 // Render marshals the given value to XML.
 func (x *XML) Render(w io.Writer, v any) error {
@@ -38,7 +38,7 @@ func (x *XML) Render(w io.Writer, v any) error {
 
 	err := enc.Encode(v)
 	if err != nil {
-		return fmt.Errorf("%w: %w", Err, err)
+		return fmt.Errorf("%w: %w", ErrFailed, err)
 	}
 
 	return nil

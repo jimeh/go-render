@@ -16,7 +16,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		renderers []render.Renderer
+		renderers []render.FormatRenderer
 		value     interface{}
 		want      string
 		wantErr   string
@@ -24,7 +24,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 	}{
 		{
 			name: "no renderer can render",
-			renderers: []render.Renderer{
+			renderers: []render.FormatRenderer{
 				cannotRenderer,
 				cannotRenderer,
 			},
@@ -33,7 +33,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "one renderer can render",
-			renderers: []render.Renderer{
+			renderers: []render.FormatRenderer{
 				cannotRenderer,
 				successRenderer,
 				cannotRenderer,
@@ -43,7 +43,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "multiple renderers can render",
-			renderers: []render.Renderer{
+			renderers: []render.FormatRenderer{
 				&mockRenderer{err: render.ErrCannotRender},
 				&mockRenderer{output: "first output"},
 				&mockRenderer{output: "second output"},
@@ -53,7 +53,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "first renderer fails",
-			renderers: []render.Renderer{
+			renderers: []render.FormatRenderer{
 				failRenderer,
 				successRenderer,
 			},
@@ -62,7 +62,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "fails after cannot render",
-			renderers: []render.Renderer{
+			renderers: []render.FormatRenderer{
 				cannotRenderer,
 				failRenderer,
 				successRenderer,
@@ -72,7 +72,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "fails after success render",
-			renderers: []render.Renderer{
+			renderers: []render.FormatRenderer{
 				successRenderer,
 				failRenderer,
 				cannotRenderer,
