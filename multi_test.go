@@ -28,7 +28,8 @@ func TestMultiRenderer_Render(t *testing.T) {
 				cannotRenderer,
 				cannotRenderer,
 			},
-			value:     struct{}{},
+			value:     "test",
+			wantErr:   "render: cannot render: string",
 			wantErrIs: []error{render.ErrCannotRender},
 		},
 		{

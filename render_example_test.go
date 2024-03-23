@@ -201,7 +201,77 @@ func (u *User) String() string {
 	)
 }
 
-func ExampleRender_textViaStringer() {
+func ExampleRender_textFromByteSlice() {
+	data := []byte("Hello, World!1")
+
+	// Render the object to XML.
+	buf := &bytes.Buffer{}
+	err := render.Render(buf, "text", data)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(buf.String())
+
+	// Output:
+	// Hello, World!1
+}
+
+func ExampleRender_textFromString() {
+	data := "Hello, World!"
+
+	// Render the object to XML.
+	buf := &bytes.Buffer{}
+	err := render.Render(buf, "text", data)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(buf.String())
+
+	// Output:
+	// Hello, World!
+}
+
+func ExampleRender_textFromIOReader() {
+	var data io.Reader = strings.NewReader("Hello, World!!!1")
+
+	// Render the object to XML.
+	buf := &bytes.Buffer{}
+	err := render.Render(buf, "text", data)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(buf.String())
+
+	// Output:
+	// Hello, World!!!1
+}
+
+func ExampleRender_textFromWriterTo() {
+	// The Role struct has a WriteTo method which writes a string representation
+	// of a role to an io.Writer:
+	//
+	//	func (r *Role) WriteTo(w io.Writer) (int64, error) {
+	//		s := fmt.Sprintf("%s (%s)", r.Name, r.Icon)
+	//		n, err := w.Write([]byte(s))
+	//
+	//		return int64(n), err
+	//	}
+
+	data := &Role{Name: "admin", Icon: "shield"}
+
+	// Render the object to XML.
+	buf := &bytes.Buffer{}
+	err := render.Render(buf, "text", data)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(buf.String())
+
+	// Output:
+	// admin (shield)
+}
+
+func ExampleRender_textFromStringer() {
 	// The User struct has a String method which returns a string representation
 	// of a user:
 	//
@@ -232,29 +302,4 @@ func ExampleRender_textViaStringer() {
 
 	// Output:
 	// John Doe (30): golang, json, yaml, toml
-}
-
-func ExampleRender_textViaWriterTo() {
-	// The Role struct has a WriteTo method which writes a string representation
-	// of a role to an io.Writer:
-	//
-	//	func (r *Role) WriteTo(w io.Writer) (int64, error) {
-	//		s := fmt.Sprintf("%s (%s)", r.Name, r.Icon)
-	//		n, err := w.Write([]byte(s))
-	//
-	//		return int64(n), err
-	//	}
-
-	data := &Role{Name: "admin", Icon: "shield"}
-
-	// Render the object to XML.
-	buf := &bytes.Buffer{}
-	err := render.Render(buf, "text", data)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(buf.String())
-
-	// Output:
-	// admin (shield)
 }

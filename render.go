@@ -104,6 +104,10 @@ func Render(w io.Writer, format string, v any) error {
 func New(formats ...string) (*Renderer, error) {
 	renderers := map[string]FormatRenderer{}
 
+	if len(formats) == 0 {
+		return nil, fmt.Errorf("%w: no formats specified", Err)
+	}
+
 	for _, format := range formats {
 		switch format {
 		case "binary":
@@ -128,7 +132,7 @@ func New(formats ...string) (*Renderer, error) {
 func MustNew(formats ...string) *Renderer {
 	r, err := New(formats...)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	return r

@@ -351,3 +351,183 @@ func TestRender(t *testing.T) {
 		})
 	}
 }
+
+func TestNew(t *testing.T) {
+	tests := []struct {
+		name      string
+		formats   []string
+		want      *render.Renderer
+		wantErr   string
+		wantErrIs []error
+	}{
+		{
+			name:      "no formats",
+			formats:   []string{},
+			wantErr:   "render: no formats specified",
+			wantErrIs: []error{render.Err},
+		},
+		{
+			name:    "single format",
+			formats: []string{"json"},
+			want: &render.Renderer{
+				Formats: map[string]render.FormatRenderer{
+					"json": render.DefaultJSON,
+				},
+			},
+		},
+		{
+			name:    "multiple formats",
+			formats: []string{"json", "text", "yaml"},
+			want: &render.Renderer{
+				Formats: map[string]render.FormatRenderer{
+					"json": render.DefaultJSON,
+					"text": render.DefaultText,
+					"yaml": render.DefaultYAML,
+				},
+			},
+		},
+		{
+			name:      "invalid format",
+			formats:   []string{"json", "text", "invalid"},
+			wantErr:   "render: unsupported format: invalid",
+			wantErrIs: []error{render.Err, render.ErrUnsupportedFormat},
+		},
+		{
+			name:    "duplicate format",
+			formats: []string{"json", "text", "json"},
+			want: &render.Renderer{
+				Formats: map[string]render.FormatRenderer{
+					"json": render.DefaultJSON,
+					"text": render.DefaultText,
+				},
+			},
+		},
+		{
+			name:    "all formats",
+			formats: []string{"json", "text", "yaml", "xml", "binary"},
+			want: &render.Renderer{
+				Formats: map[string]render.FormatRenderer{
+					"json":   render.DefaultJSON,
+					"text":   render.DefaultText,
+					"yaml":   render.DefaultYAML,
+					"xml":    render.DefaultXML,
+					"binary": render.DefaultBinary,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := render.New(tt.formats...)
+
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			}
+			for _, e := range tt.wantErrIs {
+				assert.ErrorIs(t, err, e)
+			}
+
+			if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestMustNew(t *testing.T) {
+	tests := []struct {
+		name      string
+		formats   []string
+		want      *render.Renderer
+		wantErr   string
+		wantErrIs []error
+		wantPanic string
+	}{
+		{
+			name:      "no formats",
+			formats:   []string{},
+			wantPanic: "render: no formats specified",
+		},
+		{
+			name:    "single format",
+			formats: []string{"json"},
+			want: &render.Renderer{
+				Formats: map[string]render.FormatRenderer{
+					"json": render.DefaultJSON,
+				},
+			},
+		},
+		{
+			name:    "multiple formats",
+			formats: []string{"json", "text", "yaml"},
+			want: &render.Renderer{
+				Formats: map[string]render.FormatRenderer{
+					"json": render.DefaultJSON,
+					"text": render.DefaultText,
+					"yaml": render.DefaultYAML,
+				},
+			},
+		},
+		{
+			name:      "invalid format",
+			formats:   []string{"json", "text", "invalid"},
+			wantPanic: "render: unsupported format: invalid",
+		},
+		{
+			name:    "duplicate format",
+			formats: []string{"json", "text", "json"},
+			want: &render.Renderer{
+				Formats: map[string]render.FormatRenderer{
+					"json": render.DefaultJSON,
+					"text": render.DefaultText,
+				},
+			},
+		},
+		{
+			name:    "all formats",
+			formats: []string{"json", "text", "yaml", "xml", "binary"},
+			want: &render.Renderer{
+				Formats: map[string]render.FormatRenderer{
+					"json":   render.DefaultJSON,
+					"text":   render.DefaultText,
+					"yaml":   render.DefaultYAML,
+					"xml":    render.DefaultXML,
+					"binary": render.DefaultBinary,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got *render.Renderer
+			var err error
+			var panicRes any
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						panicRes = r
+					}
+				}()
+				got = render.MustNew(tt.formats...)
+			}()
+
+			if tt.wantPanic != "" {
+				assert.Equal(t, tt.wantPanic, panicRes)
+			}
+
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			}
+			for _, e := range tt.wantErrIs {
+				assert.ErrorIs(t, err, e)
+			}
+
+			if tt.wantPanic == "" &&
+				tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}

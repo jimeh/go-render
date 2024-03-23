@@ -17,7 +17,7 @@ var _ FormatRenderer = (*Binary)(nil)
 func (bm *Binary) Render(w io.Writer, v any) error {
 	x, ok := v.(encoding.BinaryMarshaler)
 	if !ok {
-		return ErrCannotRender
+		return fmt.Errorf("%w: %T", ErrCannotRender, v)
 	}
 
 	b, err := x.MarshalBinary()

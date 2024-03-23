@@ -37,6 +37,7 @@ func TestBinary_Render(t *testing.T) {
 		{
 			name:      "does not implement encoding.BinaryMarshaler",
 			value:     struct{}{},
+			wantErr:   "render: cannot render: struct {}",
 			wantErrIs: []error{render.Err, render.ErrCannotRender},
 		},
 		{

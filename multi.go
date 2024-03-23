@@ -2,6 +2,7 @@ package render
 
 import (
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -26,5 +27,5 @@ func (mr *MultiRenderer) Render(w io.Writer, v any) error {
 		}
 	}
 
-	return ErrCannotRender
+	return fmt.Errorf("%w: %T", ErrCannotRender, v)
 }
