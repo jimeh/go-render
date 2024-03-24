@@ -57,3 +57,7 @@ func (t *Text) Render(w io.Writer, v any) error {
 
 	return nil
 }
+
+func (t *Text) Formats() []string {
+	return []string{"text", "txt", "plain"}
+}

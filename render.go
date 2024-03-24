@@ -39,101 +39,134 @@ type FormatRenderer interface {
 	Render(w io.Writer, v any) error
 }
 
+// Formats is an optional interface that can be implemented by FormatRenderer
+// implementations to return a list of formats that the renderer supports. This
+// is used by the NewRenderer function to allowing format aliases like "yml" for
+// "yaml".
+type Formats interface {
+	Formats() []string
+}
+
 var (
-	// DefaultBinary is the default binary marshaler renderer. It
-	// renders values using the encoding.BinaryMarshaler interface.
-	DefaultBinary = &Binary{}
+	prettyRenderer = New(map[string]FormatRenderer{
+		"binary": &Binary{},
+		"json":   &JSON{Pretty: true},
+		"text":   &Text{},
+		"xml":    &XML{Pretty: true},
+		"yaml":   &YAML{Indent: 2},
+	})
+	compactRenderer = New(map[string]FormatRenderer{
+		"binary": &Binary{},
+		"json":   &JSON{},
+		"text":   &Text{},
+		"xml":    &XML{},
+		"yaml":   &YAML{},
+	})
 
-	// DefaultJSON is the default JSON renderer. It renders values using the
-	// encoding/json package, with pretty printing enabled.
-	DefaultJSON = &JSON{Pretty: true}
-
-	// DefaultText is the default text renderer, used by the package level
-	// Render function. It renders values using the DefaultStringer and
-	// DefaultWriterTo renderers. This means a value must implement either the
-	// fmt.Stringer or io.WriterTo interfaces to be rendered.
-	DefaultText = &Text{}
-
-	// DefaultXML is the default XML renderer. It renders values using the
-	// encoding/xml package, with pretty printing enabled.
-	DefaultXML = &XML{Pretty: true}
-
-	// DefaultYAML is the default YAML renderer. It renders values using the
-	// gopkg.in/yaml.v3 package, with an indentation of 2 spaces.
-	DefaultYAML = &YAML{Indent: 2}
-
-	// DefaultRenderer is used by the package level Render function. It supports
-	// the text", "json", and "yaml" formats. If you need to support another set
-	// of formats, use the New function to create a custom FormatRenderer.
-	DefaultRenderer = MustNew("json", "text", "yaml")
+	DefaultPretty  = prettyRenderer.OnlyWith("json", "text", "xml", "yaml")
+	DefaultCompact = compactRenderer.OnlyWith("json", "text", "xml", "yaml")
 )
 
 // Render renders the given value to the given writer using the given format.
+// If pretty is true, the value will be rendered in a pretty way, otherwise it
+// will be rendered in a compact way.
+//
+// By default it supports the following formats:
+//
+//   - "text": Renders values via a myriad of ways.
+//   - "json": Renders values using the encoding/json package.
+//   - "yaml": Renders values using the gopkg.in/yaml.v3 package.
+//   - "xml": Renders values using the encoding/xml package.
+//
+// If the format is not supported, a ErrUnsupportedFormat error will be
+// returned.
+func Render(w io.Writer, format string, pretty bool, v any) error {
+	if pretty {
+		return DefaultPretty.Render(w, format, v)
+	}
+
+	return DefaultCompact.Render(w, format, v)
+}
+
+// Pretty renders the given value to the given writer using the given format.
 // The format must be one of the formats supported by the default renderer.
 //
 // By default it supports the following formats:
 //
-//   - "text": Renders values using the fmt.Stringer and io.WriterTo interfaces.
+//   - "text": Renders values via a myriad of ways.
 //   - "json": Renders values using the encoding/json package, with pretty
 //     printing enabled.
 //   - "yaml": Renders values using the gopkg.in/yaml.v3 package, with an
 //     indentation of 2 spaces.
+//   - "xml": Renders values using the encoding/xml package, with pretty
+//     printing enabled.
 //
 // If the format is not supported, a ErrUnsupportedFormat error will be
 // returned.
 //
 // If you need to support a custom set of formats, use the New function to
-// create a new FormatRenderer with the formats you need. If you need new custom
-// renderers, manually create a new FormatRenderer.
-func Render(w io.Writer, format string, v any) error {
-	return DefaultRenderer.Render(w, format, v)
+// create a new Renderer with the formats you need. If you need new custom
+// renderers, manually create a new Renderer.
+func Pretty(w io.Writer, format string, v any) error {
+	return DefaultPretty.Render(w, format, v)
 }
 
-// New creates a new *FormatRenderer with support for the given formats.
+// Compact renders the given value to the given writer using the given format.
+// The format must be one of the formats supported by the default renderer.
 //
-// Supported formats are:
+// By default it supports the following formats:
 //
-//   - "binary": Renders values using DefaultBinary.
-//   - "json": Renders values using DefaultJSON.
-//   - "text": Renders values using DefaultText.
-//   - "xml": Renders values using DefaultXML.
-//   - "yaml": Renders values using DefaultYAML.
+//   - "text": Renders values via a myriad of ways..
+//   - "json": Renders values using the encoding/json package.
+//   - "yaml": Renders values using the gopkg.in/yaml.v3 package.
+//   - "xml": Renders values using the encoding/xml package.
 //
-// If an unsupported format is given, an ErrUnsupportedFormat error will be
+// If the format is not supported, a ErrUnsupportedFormat error will be
 // returned.
-func New(formats ...string) (*Renderer, error) {
-	renderers := map[string]FormatRenderer{}
+//
+// If you need to support a custom set of formats, use the New function to
+// create a new Renderer with the formats you need. If you need new custom
+// renderers, manually create a new Renderer.
+func Compact(w io.Writer, format string, v any) error {
+	return DefaultCompact.Render(w, format, v)
+}
 
+// NewCompact returns a new renderer which only supports the specified formats
+// and renders structured formats compactly. If no formats are specified, a
+// error is returned.
+//
+// If any of the formats are not supported by, a ErrUnsupported error is
+// returned.
+func NewCompact(formats ...string) (*Renderer, error) {
 	if len(formats) == 0 {
 		return nil, fmt.Errorf("%w: no formats specified", Err)
 	}
 
 	for _, format := range formats {
-		switch format {
-		case "binary":
-			renderers[format] = DefaultBinary
-		case "json":
-			renderers[format] = DefaultJSON
-		case "text":
-			renderers[format] = DefaultText
-		case "xml":
-			renderers[format] = DefaultXML
-		case "yaml":
-			renderers[format] = DefaultYAML
-		default:
+		if _, ok := compactRenderer.Renderers[format]; !ok {
 			return nil, fmt.Errorf("%w: %s", ErrUnsupportedFormat, format)
 		}
 	}
 
-	return NewFormatRenderer(renderers), nil
+	return compactRenderer.OnlyWith(formats...), nil
 }
 
-// MustNew is like New, but panics if an error occurs.
-func MustNew(formats ...string) *Renderer {
-	r, err := New(formats...)
-	if err != nil {
-		panic(err.Error())
+// NewPretty returns a new renderer which only supports the specified formats
+// and renders structured formats in a pretty way. If no formats are specified,
+// a error is returned.
+//
+// If any of the formats are not supported by, a ErrUnsupported error is
+// returned.
+func NewPretty(formats ...string) (*Renderer, error) {
+	if len(formats) == 0 {
+		return nil, fmt.Errorf("%w: no formats specified", Err)
 	}
 
-	return r
+	for _, format := range formats {
+		if _, ok := prettyRenderer.Renderers[format]; !ok {
+			return nil, fmt.Errorf("%w: %s", ErrUnsupportedFormat, format)
+		}
+	}
+
+	return prettyRenderer.OnlyWith(formats...), nil
 }

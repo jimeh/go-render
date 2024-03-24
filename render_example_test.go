@@ -37,7 +37,7 @@ func ExampleRender_json() {
 
 	// Render the object to JSON.
 	buf := &bytes.Buffer{}
-	err := render.Render(buf, "json", data)
+	err := render.Pretty(buf, "json", data)
 	if err != nil {
 		fmt.Printf("err: %s\n", err)
 
@@ -96,7 +96,7 @@ func ExampleRender_yaml() {
 
 	// Render the object to YAML.
 	buf := &bytes.Buffer{}
-	err := render.Render(buf, "yaml", data)
+	err := render.Pretty(buf, "yaml", data)
 	if err != nil {
 		panic(err)
 	}
@@ -144,7 +144,7 @@ func ExampleRender_xml() {
 
 	// Create a new renderer that supports XML in addition to default JSON, YAML
 	// and Text.
-	r := render.MustNew("json", "text", "xml", "yaml")
+	r, _ := render.NewPretty("json", "text", "xml", "yaml")
 
 	// Render the object to XML.
 	buf := &bytes.Buffer{}
@@ -206,7 +206,7 @@ func ExampleRender_textFromByteSlice() {
 
 	// Render the object to XML.
 	buf := &bytes.Buffer{}
-	err := render.Render(buf, "text", data)
+	err := render.Pretty(buf, "text", data)
 	if err != nil {
 		panic(err)
 	}
@@ -221,7 +221,7 @@ func ExampleRender_textFromString() {
 
 	// Render the object to XML.
 	buf := &bytes.Buffer{}
-	err := render.Render(buf, "text", data)
+	err := render.Pretty(buf, "text", data)
 	if err != nil {
 		panic(err)
 	}
@@ -236,7 +236,7 @@ func ExampleRender_textFromIOReader() {
 
 	// Render the object to XML.
 	buf := &bytes.Buffer{}
-	err := render.Render(buf, "text", data)
+	err := render.Pretty(buf, "text", data)
 	if err != nil {
 		panic(err)
 	}
@@ -261,7 +261,7 @@ func ExampleRender_textFromWriterTo() {
 
 	// Render the object to XML.
 	buf := &bytes.Buffer{}
-	err := render.Render(buf, "text", data)
+	err := render.Pretty(buf, "text", data)
 	if err != nil {
 		panic(err)
 	}
@@ -294,7 +294,7 @@ func ExampleRender_textFromStringer() {
 
 	// Render the object to XML.
 	buf := &bytes.Buffer{}
-	err := render.Render(buf, "text", data)
+	err := render.Pretty(buf, "text", data)
 	if err != nil {
 		panic(err)
 	}

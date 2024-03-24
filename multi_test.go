@@ -1,22 +1,21 @@
-package render_test
+package render
 
 import (
 	"bytes"
 	"errors"
 	"testing"
 
-	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMultiRenderer_Render(t *testing.T) {
 	successRenderer := &mockRenderer{output: "success output"}
-	cannotRenderer := &mockRenderer{err: render.ErrCannotRender}
+	cannotRenderer := &mockRenderer{err: ErrCannotRender}
 	failRenderer := &mockRenderer{err: errors.New("mock error")}
 
 	tests := []struct {
 		name      string
-		renderers []render.FormatRenderer
+		renderers []FormatRenderer
 		value     interface{}
 		want      string
 		wantErr   string
@@ -24,17 +23,17 @@ func TestMultiRenderer_Render(t *testing.T) {
 	}{
 		{
 			name: "no renderer can render",
-			renderers: []render.FormatRenderer{
+			renderers: []FormatRenderer{
 				cannotRenderer,
 				cannotRenderer,
 			},
 			value:     "test",
 			wantErr:   "render: cannot render: string",
-			wantErrIs: []error{render.ErrCannotRender},
+			wantErrIs: []error{ErrCannotRender},
 		},
 		{
 			name: "one renderer can render",
-			renderers: []render.FormatRenderer{
+			renderers: []FormatRenderer{
 				cannotRenderer,
 				successRenderer,
 				cannotRenderer,
@@ -44,8 +43,8 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "multiple renderers can render",
-			renderers: []render.FormatRenderer{
-				&mockRenderer{err: render.ErrCannotRender},
+			renderers: []FormatRenderer{
+				&mockRenderer{err: ErrCannotRender},
 				&mockRenderer{output: "first output"},
 				&mockRenderer{output: "second output"},
 			},
@@ -54,7 +53,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "first renderer fails",
-			renderers: []render.FormatRenderer{
+			renderers: []FormatRenderer{
 				failRenderer,
 				successRenderer,
 			},
@@ -63,7 +62,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "fails after cannot render",
-			renderers: []render.FormatRenderer{
+			renderers: []FormatRenderer{
 				cannotRenderer,
 				failRenderer,
 				successRenderer,
@@ -73,7 +72,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 		},
 		{
 			name: "fails after success render",
-			renderers: []render.FormatRenderer{
+			renderers: []FormatRenderer{
 				successRenderer,
 				failRenderer,
 				cannotRenderer,
@@ -85,7 +84,7 @@ func TestMultiRenderer_Render(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mr := &render.MultiRenderer{
+			mr := &Multi{
 				Renderers: tt.renderers,
 			}
 			var buf bytes.Buffer

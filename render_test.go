@@ -1,13 +1,13 @@
-package render_test
+package render
 
 import (
 	"bytes"
 	"encoding/xml"
 	"errors"
 	"io"
+	"strings"
 	"testing"
 
-	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +35,7 @@ type mockRenderer struct {
 	err    error
 }
 
-var _ render.FormatRenderer = (*mockRenderer)(nil)
+var _ FormatRenderer = (*mockRenderer)(nil)
 
 func (m *mockRenderer) Render(w io.Writer, _ any) error {
 	_, err := w.Write([]byte(m.output))
@@ -47,231 +47,341 @@ func (m *mockRenderer) Render(w io.Writer, _ any) error {
 	return err
 }
 
-func TestDefaultJSON(t *testing.T) {
-	assert.Equal(t, &render.JSON{Pretty: true}, render.DefaultJSON)
-}
-
-func TestDefaultXML(t *testing.T) {
-	assert.Equal(t, &render.XML{Pretty: true}, render.DefaultXML)
-}
-
-func TestDefaultYAML(t *testing.T) {
-	assert.Equal(t, &render.YAML{Indent: 2}, render.DefaultYAML)
-}
-
-func TestDefaultText(t *testing.T) {
-	assert.Equal(t, &render.Text{}, render.DefaultText)
-}
-
-func TestDefaultBinary(t *testing.T) {
-	assert.Equal(t, &render.Binary{}, render.DefaultBinary)
-}
-
-func TestDefaultRenderer(t *testing.T) {
-	want := &render.Renderer{
-		Formats: map[string]render.FormatRenderer{
-			"json": render.DefaultJSON,
-			"text": render.DefaultText,
-			"yaml": render.DefaultYAML,
-		},
-	}
-
-	assert.Equal(t, want, render.DefaultRenderer)
-}
-
 type renderFormatTestCase struct {
-	name      string
-	writeErr  error
-	format    string
-	value     any
-	want      string
-	wantErr   string
-	wantErrIs []error
-	wantPanic string
+	name        string
+	writeErr    error
+	formats     []string
+	value       any
+	valueFunc   func() any
+	want        string
+	wantPretty  string
+	wantCompact string
+	wantErr     string
+	wantErrIs   []error
+	wantPanic   string
 }
 
 // "binary" format.
 var binaryFormattestCases = []renderFormatTestCase{
 	{
-		name:   "binary format with binary marshaler",
-		format: "binary",
-		value:  &mockBinaryMarshaler{data: []byte("test string")},
-		want:   "test string",
+		name:    "with binary marshaler",
+		formats: []string{"binary", "bin"},
+		value:   &mockBinaryMarshaler{data: []byte("test string")},
+		want:    "test string",
 	},
 	{
-		name:      "binary format without binary marshaler",
-		format:    "binary",
+		name:      "without binary marshaler",
+		formats:   []string{"binary", "bin"},
 		value:     struct{}{},
-		wantErr:   "render: unsupported format: binary",
-		wantErrIs: []error{render.Err, render.ErrUnsupportedFormat},
+		wantErr:   "render: unsupported format: {{format}}",
+		wantErrIs: []error{Err, ErrUnsupportedFormat},
 	},
 	{
-		name:   "binary format with error marshaling",
-		format: "binary",
+		name:    "with error marshaling",
+		formats: []string{"binary", "bin"},
 		value: &mockBinaryMarshaler{
 			data: []byte("test string"),
 			err:  errors.New("marshal error!!1"),
 		},
 		wantErr:   "render: failed: marshal error!!1",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
-		name:      "binary format with error writing to writer",
-		format:    "binary",
+		name:      "with error writing to writer",
+		formats:   []string{"binary", "bin"},
 		writeErr:  errors.New("write error!!1"),
 		value:     &mockBinaryMarshaler{data: []byte("test string")},
 		wantErr:   "render: failed: write error!!1",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
-		name:      "binary format with invalid type",
-		format:    "binary",
+		name:      "with invalid type",
+		formats:   []string{"binary", "bin"},
 		value:     make(chan int),
-		wantErr:   "render: unsupported format: binary",
-		wantErrIs: []error{render.Err, render.ErrUnsupportedFormat},
+		wantErr:   "render: unsupported format: {{format}}",
+		wantErrIs: []error{Err, ErrUnsupportedFormat},
 	},
 }
 
 // "json" format.
 var jsonFormatTestCases = []renderFormatTestCase{
 	{
-		name:   "json format",
-		format: "json",
-		value:  map[string]int{"age": 30},
-		want:   "{\n  \"age\": 30\n}\n",
+		name:        "with map",
+		formats:     []string{"json"},
+		value:       map[string]int{"age": 30},
+		wantPretty:  "{\n  \"age\": 30\n}\n",
+		wantCompact: "{\"age\":30}\n",
 	},
 	{
-		name:   "json format with json marshaler",
-		format: "json",
-		value:  &mockJSONMarshaler{data: []byte(`{"age":30}`)},
-		want:   "{\n  \"age\": 30\n}\n",
+		name:        "with json marshaler",
+		formats:     []string{"json"},
+		value:       &mockJSONMarshaler{data: []byte(`{"age":30}`)},
+		wantPretty:  "{\n  \"age\": 30\n}\n",
+		wantCompact: "{\"age\":30}\n",
 	},
 	{
-		name:      "json format with error from json marshaler",
-		format:    "json",
+		name:      "with error from json marshaler",
+		formats:   []string{"json"},
 		value:     &mockJSONMarshaler{err: errors.New("marshal error!!1")},
-		wantErrIs: []error{render.Err},
+		wantErrIs: []error{Err},
 	},
 	{
-		name:      "json format with error writing to writer",
-		format:    "json",
+		name:      "with error writing to writer",
+		formats:   []string{"json"},
 		writeErr:  errors.New("write error!!1"),
 		value:     map[string]int{"age": 30},
 		wantErr:   "render: failed: write error!!1",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
-		name:      "json format with invalid type",
-		format:    "json",
+		name:      "with invalid type",
+		formats:   []string{"json"},
 		value:     make(chan int),
 		wantErr:   "render: failed: json: unsupported type: chan int",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 }
 
 // "text" format.
 var textFormatTestCases = []renderFormatTestCase{
 	{
-		name:   "text format with fmt.Stringer",
-		format: "text",
-		value:  &mockStringer{value: "test string"},
-		want:   "test string",
+		name:      "nil",
+		formats:   []string{"text", "txt", "plain"},
+		value:     nil,
+		wantErr:   "render: unsupported format: {{format}}",
+		wantErrIs: []error{Err, ErrUnsupportedFormat},
 	},
 	{
-		name:   "text format with io.WriterTo",
-		format: "text",
-		value:  &mockWriterTo{value: "test string"},
-		want:   "test string",
+		name:    "byte slice",
+		formats: []string{"text", "txt", "plain"},
+		value:   []byte("test byte slice"),
+		want:    "test byte slice",
 	},
 	{
-		name:      "text format without fmt.Stringer or io.WriterTo",
-		format:    "text",
-		value:     struct{}{},
-		wantErr:   "render: unsupported format: text",
-		wantErrIs: []error{render.Err, render.ErrUnsupportedFormat},
+		name:    "nil byte slice",
+		formats: []string{"text", "txt", "plain"},
+		value:   []byte(nil),
+		want:    "",
 	},
 	{
-		name:      "text format with error writing to writer",
-		format:    "text",
+		name:    "empty byte slice",
+		formats: []string{"text", "txt", "plain"},
+		value:   []byte{},
+		want:    "",
+	},
+	{
+		name:    "rune slice",
+		formats: []string{"text", "txt", "plain"},
+		value:   []rune{'r', 'u', 'n', 'e', 's', '!', ' ', 'y', 'e', 's'},
+		want:    "runes! yes",
+	},
+	{
+		name:    "string",
+		formats: []string{"text", "txt", "plain"},
+		value:   "test string",
+		want:    "test string",
+	},
+	{
+		name:    "int",
+		formats: []string{"text", "txt", "plain"},
+		value:   int(42),
+		want:    "42",
+	},
+	{
+		name:    "int8",
+		formats: []string{"text", "txt", "plain"},
+		value:   int8(43),
+		want:    "43",
+	},
+	{
+		name:    "int16",
+		formats: []string{"text", "txt", "plain"},
+		value:   int16(44),
+		want:    "44",
+	},
+	{
+		name:    "int32",
+		formats: []string{"text", "txt", "plain"},
+		value:   int32(45),
+		want:    "45",
+	},
+	{
+		name:    "int64",
+		formats: []string{"text", "txt", "plain"},
+		value:   int64(46),
+		want:    "46",
+	},
+	{
+		name:    "uint",
+		formats: []string{"text", "txt", "plain"},
+		value:   uint(47),
+		want:    "47",
+	},
+	{
+		name:    "uint8",
+		formats: []string{"text", "txt", "plain"},
+		value:   uint8(48),
+		want:    "48",
+	},
+	{
+		name:    "uint16",
+		formats: []string{"text", "txt", "plain"},
+		value:   uint16(49),
+		want:    "49",
+	},
+	{
+		name:    "uint32",
+		formats: []string{"text", "txt", "plain"},
+		value:   uint32(50),
+		want:    "50",
+	},
+	{
+		name:    "uint64",
+		formats: []string{"text", "txt", "plain"},
+		value:   uint64(51),
+		want:    "51",
+	},
+	{
+		name:    "float32",
+		formats: []string{"text", "txt", "plain"},
+		value:   float32(3.14),
+		want:    "3.14",
+	},
+	{
+		name:    "float64",
+		formats: []string{"text", "txt", "plain"},
+		value:   float64(3.14159),
+		want:    "3.14159",
+	},
+	{
+		name:    "bool true",
+		formats: []string{"text", "txt", "plain"},
+		value:   true,
+		want:    "true",
+	},
+	{
+		name:    "bool false",
+		formats: []string{"text", "txt", "plain"},
+		value:   false,
+		want:    "false",
+	},
+	{
+		name:    "implements fmt.Stringer",
+		formats: []string{"text", "txt", "plain"},
+		value:   &mockStringer{value: "test string"},
+		want:    "test string",
+	},
+	{
+		name:      "error writing to writer with fmt.Stringer",
+		formats:   []string{"text", "txt", "plain"},
 		writeErr:  errors.New("write error!!1"),
 		value:     &mockStringer{value: "test string"},
 		wantErr:   "render: failed: write error!!1",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
-		name:   "text format with error from io.WriterTo",
-		format: "text",
+		name:    "implements io.WriterTo",
+		formats: []string{"text", "txt", "plain"},
+		value:   &mockWriterTo{value: "test string"},
+		want:    "test string",
+	},
+	{
+		name:    "io.WriterTo error",
+		formats: []string{"text", "txt", "plain"},
 		value: &mockWriterTo{
 			value: "test string",
 			err:   errors.New("WriteTo error!!1"),
 		},
 		wantErr:   "render: failed: WriteTo error!!1",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
-		name:      "text format with invalid type",
-		format:    "text",
-		value:     make(chan int),
-		wantErr:   "render: unsupported format: text",
-		wantErrIs: []error{render.Err, render.ErrUnsupportedFormat},
+		name:      "implements io.Reader",
+		formats:   []string{"text", "txt", "plain"},
+		valueFunc: func() any { return &mockReader{value: "reader string"} },
+		want:      "reader string",
+	},
+	{
+		name:    "io.Reader error",
+		formats: []string{"text", "txt", "plain"},
+		value: &mockReader{
+			value: "reader string",
+			err:   errors.New("Read error!!1"),
+		},
+		wantErr:   "render: failed: Read error!!1",
+		wantErrIs: []error{Err, ErrFailed},
+	},
+	{
+		name:    "error",
+		formats: []string{"text", "txt", "plain"},
+		value:   errors.New("this is an error"),
+		want:    "this is an error",
+	},
+	{
+		name:      "does not implement any supported type/interface",
+		formats:   []string{"text", "txt", "plain"},
+		value:     struct{}{},
+		wantErr:   "render: unsupported format: {{format}}",
+		wantErrIs: []error{Err, ErrUnsupportedFormat},
 	},
 }
 
 // "xml" format.
 var xmlFormatTestCases = []renderFormatTestCase{
 	{
-		name:   "xml format",
-		format: "xml",
+		name:    "xml format",
+		formats: []string{"xml"},
 		value: struct {
 			XMLName xml.Name `xml:"user"`
 			Age     int      `xml:"age"`
 		}{Age: 30},
-		want: "<user>\n  <age>30</age>\n</user>",
+		wantPretty:  "<user>\n  <age>30</age>\n</user>",
+		wantCompact: "<user><age>30</age></user>",
 	},
 	{
-		name:   "xml format with xml.Marshaler",
-		format: "xml",
-		value:  &mockXMLMarshaler{elm: "test string"},
-		want:   "<mockXMLMarshaler>test string</mockXMLMarshaler>",
+		name:    "xml format with xml.Marshaler",
+		formats: []string{"xml"},
+		value:   &mockXMLMarshaler{elm: "test string"},
+		want:    "<mockXMLMarshaler>test string</mockXMLMarshaler>",
 	},
 	{
 		name:      "xml format with error from xml.Marshaler",
-		format:    "xml",
+		formats:   []string{"xml"},
 		value:     &mockXMLMarshaler{err: errors.New("marshal error!!1")},
 		wantErr:   "render: failed: marshal error!!1",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
 		name:     "xml format with error writing to writer",
-		format:   "xml",
+		formats:  []string{"xml"},
 		writeErr: errors.New("write error!!1"),
 		value: struct {
 			XMLName xml.Name `xml:"user"`
 			Age     int      `xml:"age"`
 		}{Age: 30},
 		wantErr:   "render: failed: write error!!1",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
 		name:      "xml format with invalid value",
-		format:    "xml",
+		formats:   []string{"xml"},
 		value:     make(chan int),
 		wantErr:   "render: failed: xml: unsupported type: chan int",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 }
 
 // "yaml" format.
 var yamlFormatTestCases = []renderFormatTestCase{
 	{
-		name:   "yaml format",
-		format: "yaml",
-		value:  map[string]int{"age": 30},
-		want:   "age: 30\n",
+		name:    "yaml format with map",
+		formats: []string{"yaml", "yml"},
+		value:   map[string]int{"age": 30},
+		want:    "age: 30\n",
 	},
 	{
-		name:   "yaml format with nested structure",
-		format: "yaml",
+		name:    "yaml format with nested structure",
+		formats: []string{"yaml", "yml"},
 		value: map[string]any{
 			"user": map[string]any{
 				"age":  30,
@@ -281,253 +391,148 @@ var yamlFormatTestCases = []renderFormatTestCase{
 		want: "user:\n  age: 30\n  name: John Doe\n",
 	},
 	{
-		name:   "yaml format with yaml.Marshaler",
-		format: "yaml",
-		value:  &mockYAMLMarshaler{val: map[string]int{"age": 30}},
-		want:   "age: 30\n",
+		name:    "yaml format with yaml.Marshaler",
+		formats: []string{"yaml", "yml"},
+		value:   &mockYAMLMarshaler{val: map[string]int{"age": 30}},
+		want:    "age: 30\n",
 	},
 	{
 		name:      "yaml format with error from yaml.Marshaler",
-		format:    "yaml",
+		formats:   []string{"yaml", "yml"},
 		value:     &mockYAMLMarshaler{err: errors.New("mock error")},
 		wantErr:   "render: failed: mock error",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
 		name:      "yaml format with error writing to writer",
-		format:    "yaml",
+		formats:   []string{"yaml", "yml"},
 		writeErr:  errors.New("write error!!1"),
 		value:     map[string]int{"age": 30},
 		wantErr:   "render: failed: yaml: write error: write error!!1",
-		wantErrIs: []error{render.Err, render.ErrFailed},
+		wantErrIs: []error{Err, ErrFailed},
 	},
 	{
 		name:      "yaml format with invalid type",
-		format:    "yaml",
+		formats:   []string{"yaml", "yml"},
 		value:     make(chan int),
 		wantPanic: "cannot marshal type: chan int",
 	},
 }
 
-func TestRender(t *testing.T) {
+func TestPretty(t *testing.T) {
 	tests := []renderFormatTestCase{}
 	tests = append(tests, jsonFormatTestCases...)
 	tests = append(tests, textFormatTestCases...)
 	tests = append(tests, yamlFormatTestCases...)
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			w := &mockWriter{WriteErr: tt.writeErr}
+		for _, format := range tt.formats {
+			t.Run(format+" format "+tt.name, func(t *testing.T) {
+				w := &mockWriter{WriteErr: tt.writeErr}
 
-			var err error
-			var panicRes any
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						panicRes = r
-					}
+				value := tt.value
+				if tt.valueFunc != nil {
+					value = tt.valueFunc()
+				}
+
+				var err error
+				var panicRes any
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							panicRes = r
+						}
+					}()
+					err = Pretty(w, format, value)
 				}()
-				err = render.Render(w, tt.format, tt.value)
-			}()
 
-			got := w.String()
+				got := w.String()
+				var want string
+				if tt.wantPretty == "" && tt.wantCompact == "" {
+					want = tt.want
+				} else {
+					want = tt.wantPretty
+				}
 
-			if tt.wantPanic != "" {
-				assert.Equal(t, tt.wantPanic, panicRes)
-			}
+				if tt.wantPanic != "" {
+					assert.Equal(t, tt.wantPanic, panicRes)
+				}
 
-			if tt.wantErr != "" {
-				assert.EqualError(t, err, tt.wantErr)
-			}
-			for _, e := range tt.wantErrIs {
-				assert.ErrorIs(t, err, e)
-			}
+				if tt.wantErr != "" {
+					wantErr := strings.ReplaceAll(
+						tt.wantErr, "{{format}}", format,
+					)
+					assert.EqualError(t, err, wantErr)
+				}
+				for _, e := range tt.wantErrIs {
+					assert.ErrorIs(t, err, e)
+				}
 
-			if tt.wantPanic == "" &&
-				tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
-		})
+				if tt.wantPanic == "" &&
+					tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+					assert.NoError(t, err)
+					assert.Equal(t, want, got)
+				}
+			})
+		}
 	}
 }
 
-func TestNew(t *testing.T) {
-	tests := []struct {
-		name      string
-		formats   []string
-		want      *render.Renderer
-		wantErr   string
-		wantErrIs []error
-	}{
-		{
-			name:      "no formats",
-			formats:   []string{},
-			wantErr:   "render: no formats specified",
-			wantErrIs: []error{render.Err},
-		},
-		{
-			name:    "single format",
-			formats: []string{"json"},
-			want: &render.Renderer{
-				Formats: map[string]render.FormatRenderer{
-					"json": render.DefaultJSON,
-				},
-			},
-		},
-		{
-			name:    "multiple formats",
-			formats: []string{"json", "text", "yaml"},
-			want: &render.Renderer{
-				Formats: map[string]render.FormatRenderer{
-					"json": render.DefaultJSON,
-					"text": render.DefaultText,
-					"yaml": render.DefaultYAML,
-				},
-			},
-		},
-		{
-			name:      "invalid format",
-			formats:   []string{"json", "text", "invalid"},
-			wantErr:   "render: unsupported format: invalid",
-			wantErrIs: []error{render.Err, render.ErrUnsupportedFormat},
-		},
-		{
-			name:    "duplicate format",
-			formats: []string{"json", "text", "json"},
-			want: &render.Renderer{
-				Formats: map[string]render.FormatRenderer{
-					"json": render.DefaultJSON,
-					"text": render.DefaultText,
-				},
-			},
-		},
-		{
-			name:    "all formats",
-			formats: []string{"json", "text", "yaml", "xml", "binary"},
-			want: &render.Renderer{
-				Formats: map[string]render.FormatRenderer{
-					"json":   render.DefaultJSON,
-					"text":   render.DefaultText,
-					"yaml":   render.DefaultYAML,
-					"xml":    render.DefaultXML,
-					"binary": render.DefaultBinary,
-				},
-			},
-		},
-	}
+func TestCompact(t *testing.T) {
+	tests := []renderFormatTestCase{}
+	tests = append(tests, jsonFormatTestCases...)
+	tests = append(tests, textFormatTestCases...)
+	tests = append(tests, yamlFormatTestCases...)
+
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := render.New(tt.formats...)
+		for _, format := range tt.formats {
+			t.Run(format+" format "+tt.name, func(t *testing.T) {
+				w := &mockWriter{WriteErr: tt.writeErr}
 
-			if tt.wantErr != "" {
-				assert.EqualError(t, err, tt.wantErr)
-			}
-			for _, e := range tt.wantErrIs {
-				assert.ErrorIs(t, err, e)
-			}
+				value := tt.value
+				if tt.valueFunc != nil {
+					value = tt.valueFunc()
+				}
 
-			if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
-		})
-	}
-}
-
-func TestMustNew(t *testing.T) {
-	tests := []struct {
-		name      string
-		formats   []string
-		want      *render.Renderer
-		wantErr   string
-		wantErrIs []error
-		wantPanic string
-	}{
-		{
-			name:      "no formats",
-			formats:   []string{},
-			wantPanic: "render: no formats specified",
-		},
-		{
-			name:    "single format",
-			formats: []string{"json"},
-			want: &render.Renderer{
-				Formats: map[string]render.FormatRenderer{
-					"json": render.DefaultJSON,
-				},
-			},
-		},
-		{
-			name:    "multiple formats",
-			formats: []string{"json", "text", "yaml"},
-			want: &render.Renderer{
-				Formats: map[string]render.FormatRenderer{
-					"json": render.DefaultJSON,
-					"text": render.DefaultText,
-					"yaml": render.DefaultYAML,
-				},
-			},
-		},
-		{
-			name:      "invalid format",
-			formats:   []string{"json", "text", "invalid"},
-			wantPanic: "render: unsupported format: invalid",
-		},
-		{
-			name:    "duplicate format",
-			formats: []string{"json", "text", "json"},
-			want: &render.Renderer{
-				Formats: map[string]render.FormatRenderer{
-					"json": render.DefaultJSON,
-					"text": render.DefaultText,
-				},
-			},
-		},
-		{
-			name:    "all formats",
-			formats: []string{"json", "text", "yaml", "xml", "binary"},
-			want: &render.Renderer{
-				Formats: map[string]render.FormatRenderer{
-					"json":   render.DefaultJSON,
-					"text":   render.DefaultText,
-					"yaml":   render.DefaultYAML,
-					"xml":    render.DefaultXML,
-					"binary": render.DefaultBinary,
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var got *render.Renderer
-			var err error
-			var panicRes any
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						panicRes = r
-					}
+				var err error
+				var panicRes any
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							panicRes = r
+						}
+					}()
+					err = Compact(w, format, value)
 				}()
-				got = render.MustNew(tt.formats...)
-			}()
 
-			if tt.wantPanic != "" {
-				assert.Equal(t, tt.wantPanic, panicRes)
-			}
+				got := w.String()
+				var want string
+				if tt.wantPretty == "" && tt.wantCompact == "" {
+					want = tt.want
+				} else {
+					want = tt.wantCompact
+				}
 
-			if tt.wantErr != "" {
-				assert.EqualError(t, err, tt.wantErr)
-			}
-			for _, e := range tt.wantErrIs {
-				assert.ErrorIs(t, err, e)
-			}
+				if tt.wantPanic != "" {
+					assert.Equal(t, tt.wantPanic, panicRes)
+				}
 
-			if tt.wantPanic == "" &&
-				tt.wantErr == "" && len(tt.wantErrIs) == 0 {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
-		})
+				if tt.wantErr != "" {
+					wantErr := strings.ReplaceAll(
+						tt.wantErr, "{{format}}", format,
+					)
+					assert.EqualError(t, err, wantErr)
+				}
+				for _, e := range tt.wantErrIs {
+					assert.ErrorIs(t, err, e)
+				}
+
+				if tt.wantPanic == "" &&
+					tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+					assert.NoError(t, err)
+					assert.Equal(t, want, got)
+				}
+			})
+		}
 	}
 }

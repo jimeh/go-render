@@ -14,7 +14,7 @@ var _ FormatRenderer = (*Binary)(nil)
 
 // Render writes result of calling MarshalBinary() on v. If v does not implment
 // encoding.BinaryMarshaler the ErrCannotRander error will be returned.
-func (bm *Binary) Render(w io.Writer, v any) error {
+func (br *Binary) Render(w io.Writer, v any) error {
 	x, ok := v.(encoding.BinaryMarshaler)
 	if !ok {
 		return fmt.Errorf("%w: %T", ErrCannotRender, v)
@@ -31,4 +31,8 @@ func (bm *Binary) Render(w io.Writer, v any) error {
 	}
 
 	return nil
+}
+
+func (br *Binary) Formats() []string {
+	return []string{"binary", "bin"}
 }

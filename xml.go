@@ -43,3 +43,7 @@ func (x *XML) Render(w io.Writer, v any) error {
 
 	return nil
 }
+
+func (x *XML) Formats() []string {
+	return []string{"xml"}
+}

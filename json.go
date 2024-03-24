@@ -24,11 +24,11 @@ type JSON struct {
 var _ FormatRenderer = (*JSON)(nil)
 
 // Render marshals the given value to JSON.
-func (j *JSON) Render(w io.Writer, v any) error {
+func (jr *JSON) Render(w io.Writer, v any) error {
 	enc := json.NewEncoder(w)
-	if j.Pretty {
-		prefix := j.Prefix
-		indent := j.Indent
+	if jr.Pretty {
+		prefix := jr.Prefix
+		indent := jr.Indent
 		if indent == "" {
 			indent = "  "
 		}
@@ -42,4 +42,8 @@ func (j *JSON) Render(w io.Writer, v any) error {
 	}
 
 	return nil
+}
+
+func (jr *JSON) Formats() []string {
+	return []string{"json"}
 }

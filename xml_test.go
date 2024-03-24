@@ -1,4 +1,4 @@
-package render_test
+package render
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -90,20 +89,20 @@ func TestXML_Render(t *testing.T) {
 			name:      "error from xml.Marshaler",
 			value:     &mockXMLMarshaler{err: errors.New("mock error")},
 			wantErr:   "render: failed: mock error",
-			wantErrIs: []error{render.Err, render.ErrFailed},
+			wantErrIs: []error{Err, ErrFailed},
 		},
 		{
 			name:      "invalid value",
 			pretty:    false,
 			value:     make(chan int),
 			wantErr:   "render: failed: xml: unsupported type: chan int",
-			wantErrIs: []error{render.Err, render.ErrFailed},
+			wantErrIs: []error{Err, ErrFailed},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			x := &render.XML{
+			x := &XML{
 				Pretty: tt.pretty,
 				Prefix: tt.prefix,
 				Indent: tt.indent,

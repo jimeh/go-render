@@ -17,10 +17,10 @@ type YAML struct {
 var _ FormatRenderer = (*YAML)(nil)
 
 // Render marshals the given value to YAML.
-func (j *YAML) Render(w io.Writer, v any) error {
+func (y *YAML) Render(w io.Writer, v any) error {
 	enc := yaml.NewEncoder(w)
 
-	indent := j.Indent
+	indent := y.Indent
 	if indent == 0 {
 		indent = 2
 	}
@@ -33,4 +33,8 @@ func (j *YAML) Render(w io.Writer, v any) error {
 	}
 
 	return nil
+}
+
+func (y *YAML) Formats() []string {
+	return []string{"yaml", "yml"}
 }

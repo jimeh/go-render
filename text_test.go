@@ -1,4 +1,4 @@
-package render_test
+package render
 
 import (
 	"errors"
@@ -6,7 +6,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -102,7 +101,7 @@ func TestText_Render(t *testing.T) {
 			name:      "nil",
 			value:     nil,
 			wantErr:   "render: cannot render: <nil>",
-			wantErrIs: []error{render.Err, render.ErrCannotRender},
+			wantErrIs: []error{Err, ErrCannotRender},
 		},
 		{
 			name:  "byte slice",
@@ -153,7 +152,7 @@ func TestText_Render(t *testing.T) {
 			writeErr:  errors.New("write error!!1"),
 			value:     &mockStringer{value: "test string"},
 			wantErr:   "render: failed: write error!!1",
-			wantErrIs: []error{render.Err, render.ErrFailed},
+			wantErrIs: []error{Err, ErrFailed},
 		},
 		{
 			name:  "implements io.WriterTo",
@@ -167,7 +166,7 @@ func TestText_Render(t *testing.T) {
 				err:   errors.New("WriteTo error!!1"),
 			},
 			wantErr:   "render: failed: WriteTo error!!1",
-			wantErrIs: []error{render.Err, render.ErrFailed},
+			wantErrIs: []error{Err, ErrFailed},
 		},
 		{
 			name:  "implements io.Reader",
@@ -181,7 +180,7 @@ func TestText_Render(t *testing.T) {
 				err:   errors.New("Read error!!1"),
 			},
 			wantErr:   "render: failed: Read error!!1",
-			wantErrIs: []error{render.Err, render.ErrFailed},
+			wantErrIs: []error{Err, ErrFailed},
 		},
 		{
 			name:  "error",
@@ -192,12 +191,12 @@ func TestText_Render(t *testing.T) {
 			name:      "does not implement any supported type/interface",
 			value:     struct{}{},
 			wantErr:   "render: cannot render: struct {}",
-			wantErrIs: []error{render.Err, render.ErrCannotRender},
+			wantErrIs: []error{Err, ErrCannotRender},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &render.Text{}
+			s := &Text{}
 			w := &mockWriter{WriteErr: tt.writeErr}
 
 			err := s.Render(w, tt.value)
@@ -216,8 +215,4 @@ func TestText_Render(t *testing.T) {
 			}
 		})
 	}
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

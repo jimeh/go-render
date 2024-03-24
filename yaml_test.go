@@ -1,11 +1,10 @@
-package render_test
+package render
 
 import (
 	"bytes"
 	"errors"
 	"testing"
 
-	"github.com/jimeh/go-render"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
@@ -67,7 +66,7 @@ func TestYAML_Render(t *testing.T) {
 			name:      "error from yaml.Marshaler",
 			value:     &mockYAMLMarshaler{err: errors.New("mock error")},
 			wantErr:   "render: failed: mock error",
-			wantErrIs: []error{render.Err, render.ErrFailed},
+			wantErrIs: []error{Err, ErrFailed},
 		},
 		{
 			name:      "invalid value",
@@ -78,7 +77,7 @@ func TestYAML_Render(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			j := &render.YAML{
+			j := &YAML{
 				Indent: tt.indent,
 			}
 
