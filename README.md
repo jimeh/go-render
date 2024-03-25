@@ -34,7 +34,7 @@ formats.
 
 ## Import
 
-```
+```go
 import "github.com/jimeh/go-render"
 ```
 
@@ -62,15 +62,15 @@ The above assumes the following `Version` struct:
 
 ```go
 type Version struct {
-	Version string `json:"version" yaml:"version" xml:",chardata"`
-	Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-	Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+    Version string `json:"version" yaml:"version" xml:",chardata"`
+    Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
+    Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
 }
 
 func (v *Version) String() string {
-	return fmt.Sprintf(
-		"%s (stable: %t, latest: %t)", v.Version, v.Stable, v.Latest,
-	)
+    return fmt.Sprintf(
+        "%s (stable: %t, latest: %t)", v.Version, v.Stable, v.Latest,
+    )
 }
 ```
 
