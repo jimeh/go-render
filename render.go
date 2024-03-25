@@ -1,4 +1,4 @@
-// Package render provides a simple and flexible way to render a value to a
+// Package render provides a simple and flexible solutio to render a value to a
 // io.Writer using different formats based on a format string argument.
 //
 // It is designed around using a custom type/struct to render your output.
