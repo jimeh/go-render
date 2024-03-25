@@ -14,6 +14,7 @@
   <a href="https://pkg.go.dev/github.com/jimeh/go-render"><img src="https://img.shields.io/badge/%E2%80%8B-reference-387b97.svg?logo=go&logoColor=white" alt="Go Reference"></a>
   <a href="https://github.com/jimeh/go-render/issues"><img src="https://img.shields.io/github/issues-raw/jimeh/go-render.svg?style=flat&logo=github&logoColor=white" alt="GitHub issues"></a>
   <a href="https://github.com/jimeh/go-render/pulls"><img src="https://img.shields.io/github/issues-pr-raw/jimeh/go-render.svg?style=flat&logo=github&logoColor=white" alt="GitHub pull requests"></a>
+  <a href="https://codeclimate.com/github/jimeh/go-render"><img src="https://img.shields.io/codeclimate/coverage/jimeh/go-render.svg?logo=code%20climate" alt="Coverage"></a>
   <a href="https://github.com/jimeh/go-render/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jimeh/go-render.svg?style=flat" alt="License Status"></a>
 </p>
 
