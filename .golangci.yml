@@ -4,6 +4,7 @@ linters-settings:
     statements: 150
   goconst:
     min-occurrences: 5
+    ignore-strings: "^ format $"
   gocyclo:
     min-complexity: 20
   golint:
