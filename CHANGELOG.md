@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.2](https://github.com/jimeh/go-render/compare/v0.0.1...v0.0.2) (2024-03-25)
+
+
+### Bug Fixes
+
+* **examples:** provide examples for Render, Compact and Pretty functions ([#3](https://github.com/jimeh/go-render/issues/3)) ([67a0623](https://github.com/jimeh/go-render/commit/67a0623a2b6b2dcc7e66762c9f1c02ca54be942a))
+
 ## 0.0.1 (2024-03-25)
 
 
