@@ -7,24 +7,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// YAML is a renderer that marshals the given value to YAML.
+var YAMLDefaultIndent = 2
+
+// YAML is a Handler that marshals the given value to YAML.
 type YAML struct {
 	// Indent controls how many spaces will be used for indenting nested blocks
-	// in the output YAML. When Indent is zero, 2 will be used by default.
+	// in the output YAML. When Indent is zero, YAMLDefaultIndent will be used.
 	Indent int
 }
 
-var _ FormatRenderer = (*YAML)(nil)
+var (
+	_ Handler        = (*YAML)(nil)
+	_ FormatsHandler = (*YAML)(nil)
+)
 
 // Render marshals the given value to YAML.
 func (y *YAML) Render(w io.Writer, v any) error {
-	enc := yaml.NewEncoder(w)
-
 	indent := y.Indent
 	if indent == 0 {
-		indent = 2
+		indent = YAMLDefaultIndent
 	}
 
+	enc := yaml.NewEncoder(w)
 	enc.SetIndent(indent)
 
 	err := enc.Encode(v)
@@ -35,6 +39,7 @@ func (y *YAML) Render(w io.Writer, v any) error {
 	return nil
 }
 
+// Formats returns a list of format strings that this Handler supports.
 func (y *YAML) Formats() []string {
 	return []string{"yaml", "yml"}
 }

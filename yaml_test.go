@@ -24,7 +24,7 @@ func TestYAML_Render(t *testing.T) {
 	tests := []struct {
 		name      string
 		indent    int
-		value     interface{}
+		value     any
 		want      string
 		wantErr   string
 		wantErrIs []error
@@ -112,4 +112,10 @@ func TestYAML_Render(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestYAML_Formats(t *testing.T) {
+	h := &YAML{}
+
+	assert.Equal(t, []string{"yaml", "yml"}, h.Formats())
 }

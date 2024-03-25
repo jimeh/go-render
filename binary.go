@@ -10,7 +10,10 @@ import (
 // interface.
 type Binary struct{}
 
-var _ FormatRenderer = (*Binary)(nil)
+var (
+	_ Handler        = (*Binary)(nil)
+	_ FormatsHandler = (*Binary)(nil)
+)
 
 // Render writes result of calling MarshalBinary() on v. If v does not implment
 // encoding.BinaryMarshaler the ErrCannotRander error will be returned.
@@ -33,6 +36,7 @@ func (br *Binary) Render(w io.Writer, v any) error {
 	return nil
 }
 
+// Formats returns a list of format strings that this Handler supports.
 func (br *Binary) Formats() []string {
 	return []string{"binary", "bin"}
 }

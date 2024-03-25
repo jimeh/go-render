@@ -30,21 +30,91 @@ func (mw *mockWriter) String() string {
 	return mw.buf.String()
 }
 
-type mockRenderer struct {
-	output string
-	err    error
+type mockHandler struct {
+	output  string
+	formats []string
+	err     error
 }
 
-var _ FormatRenderer = (*mockRenderer)(nil)
+var (
+	_ Handler        = (*mockHandler)(nil)
+	_ FormatsHandler = (*mockHandler)(nil)
+)
 
-func (m *mockRenderer) Render(w io.Writer, _ any) error {
-	_, err := w.Write([]byte(m.output))
+func (mh *mockHandler) Render(w io.Writer, _ any) error {
+	_, err := w.Write([]byte(mh.output))
 
-	if m.err != nil {
-		return m.err
+	if mh.err != nil {
+		return mh.err
 	}
 
 	return err
+}
+
+func (mh *mockHandler) Formats() []string {
+	return mh.formats
+}
+
+type mockPrettyHandler struct {
+	output       string
+	prettyOutput string
+	formats      []string
+	err          error
+}
+
+var (
+	_ Handler        = (*mockPrettyHandler)(nil)
+	_ PrettyHandler  = (*mockPrettyHandler)(nil)
+	_ FormatsHandler = (*mockPrettyHandler)(nil)
+)
+
+func (mph *mockPrettyHandler) Render(w io.Writer, _ any) error {
+	_, err := w.Write([]byte(mph.output))
+
+	if mph.err != nil {
+		return mph.err
+	}
+
+	return err
+}
+
+func (mph *mockPrettyHandler) RenderPretty(w io.Writer, _ any) error {
+	_, err := w.Write([]byte(mph.prettyOutput))
+
+	if mph.err != nil {
+		return mph.err
+	}
+
+	return err
+}
+
+func (mph *mockPrettyHandler) Formats() []string {
+	return mph.formats
+}
+
+type mockFormatsHandler struct {
+	output  string
+	formats []string
+	err     error
+}
+
+var (
+	_ Handler        = (*mockFormatsHandler)(nil)
+	_ FormatsHandler = (*mockFormatsHandler)(nil)
+)
+
+func (mph *mockFormatsHandler) Render(w io.Writer, _ any) error {
+	_, err := w.Write([]byte(mph.output))
+
+	if mph.err != nil {
+		return mph.err
+	}
+
+	return err
+}
+
+func (mph *mockFormatsHandler) Formats() []string {
+	return mph.formats
 }
 
 type renderFormatTestCase struct {
@@ -66,6 +136,12 @@ var binaryFormattestCases = []renderFormatTestCase{
 	{
 		name:    "with binary marshaler",
 		formats: []string{"binary", "bin"},
+		value:   &mockBinaryMarshaler{data: []byte("test string")},
+		want:    "test string",
+	},
+	{
+		name:    "capitalized format",
+		formats: []string{"BINARY", "BIN"},
 		value:   &mockBinaryMarshaler{data: []byte("test string")},
 		want:    "test string",
 	},
@@ -113,6 +189,13 @@ var jsonFormatTestCases = []renderFormatTestCase{
 		wantCompact: "{\"age\":30}\n",
 	},
 	{
+		name:        "capitalized format",
+		formats:     []string{"JSON"},
+		value:       map[string]int{"age": 30},
+		wantPretty:  "{\n  \"age\": 30\n}\n",
+		wantCompact: "{\"age\":30}\n",
+	},
+	{
 		name:        "with json marshaler",
 		formats:     []string{"json"},
 		value:       &mockJSONMarshaler{data: []byte(`{"age":30}`)},
@@ -150,6 +233,12 @@ var textFormatTestCases = []renderFormatTestCase{
 		value:     nil,
 		wantErr:   "render: unsupported format: {{format}}",
 		wantErrIs: []error{Err, ErrUnsupportedFormat},
+	},
+	{
+		name:    "capitalized format",
+		formats: []string{"TEXT", "TXT", "PLAIN"},
+		value:   []byte("test byte slice"),
+		want:    "test byte slice",
 	},
 	{
 		name:    "byte slice",
@@ -345,6 +434,12 @@ var xmlFormatTestCases = []renderFormatTestCase{
 		want:    "<mockXMLMarshaler>test string</mockXMLMarshaler>",
 	},
 	{
+		name:    "capitalized format",
+		formats: []string{"XML"},
+		value:   &mockXMLMarshaler{elm: "test string"},
+		want:    "<mockXMLMarshaler>test string</mockXMLMarshaler>",
+	},
+	{
 		name:      "xml format with error from xml.Marshaler",
 		formats:   []string{"xml"},
 		value:     &mockXMLMarshaler{err: errors.New("marshal error!!1")},
@@ -376,6 +471,12 @@ var yamlFormatTestCases = []renderFormatTestCase{
 	{
 		name:    "yaml format with map",
 		formats: []string{"yaml", "yml"},
+		value:   map[string]int{"age": 30},
+		want:    "age: 30\n",
+	},
+	{
+		name:    "capitalized format",
+		formats: []string{"YAML", "YML"},
 		value:   map[string]int{"age": 30},
 		want:    "age: 30\n",
 	},
@@ -417,6 +518,72 @@ var yamlFormatTestCases = []renderFormatTestCase{
 		value:     make(chan int),
 		wantPanic: "cannot marshal type: chan int",
 	},
+}
+
+func TestRender(t *testing.T) {
+	tests := []renderFormatTestCase{}
+	tests = append(tests, jsonFormatTestCases...)
+	tests = append(tests, textFormatTestCases...)
+	tests = append(tests, yamlFormatTestCases...)
+
+	for _, tt := range tests {
+		for _, pretty := range []bool{false, true} {
+			for _, format := range tt.formats {
+				name := format + " format " + tt.name
+				if pretty {
+					name = "pretty " + name
+				}
+
+				t.Run(name, func(t *testing.T) {
+					w := &mockWriter{WriteErr: tt.writeErr}
+
+					value := tt.value
+					if tt.valueFunc != nil {
+						value = tt.valueFunc()
+					}
+
+					var err error
+					var panicRes any
+					func() {
+						defer func() {
+							if r := recover(); r != nil {
+								panicRes = r
+							}
+						}()
+						err = Render(w, format, pretty, value)
+					}()
+
+					got := w.String()
+					want := tt.want
+					if pretty && tt.wantPretty != "" {
+						want = tt.wantPretty
+					} else if tt.wantCompact != "" {
+						want = tt.wantCompact
+					}
+
+					if tt.wantPanic != "" {
+						assert.Equal(t, tt.wantPanic, panicRes)
+					}
+
+					if tt.wantErr != "" {
+						wantErr := strings.ReplaceAll(
+							tt.wantErr, "{{format}}", format,
+						)
+						assert.EqualError(t, err, wantErr)
+					}
+					for _, e := range tt.wantErrIs {
+						assert.ErrorIs(t, err, e)
+					}
+
+					if tt.wantPanic == "" &&
+						tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+						assert.NoError(t, err)
+						assert.Equal(t, want, got)
+					}
+				})
+			}
+		}
+	}
 }
 
 func TestPretty(t *testing.T) {
@@ -534,5 +701,88 @@ func TestCompact(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestNewWith(t *testing.T) {
+	tests := []struct {
+		name    string
+		formats []string
+		want    *Renderer
+	}{
+		{
+			name:    "no formats",
+			formats: nil,
+			want: &Renderer{
+				Handlers: map[string]Handler{},
+			},
+		},
+		{
+			name:    "single format",
+			formats: []string{"json"},
+			want: &Renderer{
+				Handlers: map[string]Handler{
+					"json": &JSON{},
+				},
+			},
+		},
+		{
+			name:    "multiple formats",
+			formats: []string{"json", "xml"},
+			want: &Renderer{
+				Handlers: map[string]Handler{
+					"json": &JSON{},
+					"xml":  &XML{},
+				},
+			},
+		},
+		{
+			name:    "multiple formats with aliases",
+			formats: []string{"yaml", "text", "binary"},
+			want: &Renderer{
+				Handlers: map[string]Handler{
+					"bin":    &Binary{},
+					"binary": &Binary{},
+					"plain":  &Text{},
+					"text":   &Text{},
+					"txt":    &Text{},
+					"yaml":   &YAML{},
+					"yml":    &YAML{},
+				},
+			},
+		},
+		{
+			name:    "duplicate formats",
+			formats: []string{"json", "json", "yaml", "yaml"},
+			want: &Renderer{
+				Handlers: map[string]Handler{
+					"json": &JSON{},
+					"yaml": &YAML{},
+					"yml":  &YAML{},
+				},
+			},
+		},
+		{
+			name:    "capitalized formats",
+			formats: []string{"YAML", "TEXT", "BINARY"},
+			want: &Renderer{
+				Handlers: map[string]Handler{
+					"bin":    &Binary{},
+					"binary": &Binary{},
+					"plain":  &Text{},
+					"text":   &Text{},
+					"txt":    &Text{},
+					"yaml":   &YAML{},
+					"yml":    &YAML{},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewWith(tt.formats...)
+
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }

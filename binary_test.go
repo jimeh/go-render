@@ -78,3 +78,9 @@ func TestBinary_Render(t *testing.T) {
 		})
 	}
 }
+
+func TestBinary_Formats(t *testing.T) {
+	h := &Binary{}
+
+	assert.Equal(t, []string{"binary", "bin"}, h.Formats())
+}

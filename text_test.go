@@ -216,3 +216,9 @@ func TestText_Render(t *testing.T) {
 		})
 	}
 }
+
+func TestText_Formats(t *testing.T) {
+	h := &Text{}
+
+	assert.Equal(t, []string{"text", "txt", "plain"}, h.Formats())
+}

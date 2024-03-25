@@ -5,8 +5,10 @@ import (
 	"io"
 )
 
-// Text is a renderer that writes the given value to the writer as is. It
-// supports rendering the following types as plain text:
+// Text is a Handler that writes the given value to the writer as text,
+// supporting multiple types and interfaces.
+//
+// Supports rendering the following types as text:
 //
 //   - []byte
 //   - []rune
@@ -23,7 +25,10 @@ import (
 // If the value is of any other type, a ErrCannotRender error will be returned.
 type Text struct{}
 
-var _ FormatRenderer = (*Text)(nil)
+var (
+	_ Handler        = (*Text)(nil)
+	_ FormatsHandler = (*Text)(nil)
+)
 
 // Render writes the given value to the writer as text.
 func (t *Text) Render(w io.Writer, v any) error {
@@ -58,6 +63,7 @@ func (t *Text) Render(w io.Writer, v any) error {
 	return nil
 }
 
+// Formats returns a list of format strings that this Handler supports.
 func (t *Text) Formats() []string {
 	return []string{"text", "txt", "plain"}
 }

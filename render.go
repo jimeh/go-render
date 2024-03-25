@@ -1,14 +1,20 @@
 // Package render provides a simple and flexible way to render a value to a
 // io.Writer using different formats based on a format string argument.
 //
-// It allows rendering a custom type which can be marshaled to JSON, YAML, XML,
-// while also supporting plain text by implementing fmt.Stringer or io.WriterTo.
-// Binary output is also supported by implementing the encoding.BinaryMarshaler
-// interface.
+// It is designed around using a custom type/struct to render your output.
+// Thanks to Go's marshaling interfaces, you get JSON, YAML, and XML support
+// almost for free. While plain text output is supported by the type
+// implementing io.Reader, io.WriterTo, fmt.Stringer, or error interfaces, or by
+// simply being a type which can easily be type cast to a byte slice.
 //
 // Originally intended to easily implement CLI tools which can output their data
 // as plain text, as well as JSON/YAML with a simple switch of a format string.
 // But it can just as easily render to any io.Writer.
+//
+// The package is designed to be flexible and extensible with a sensible set of
+// defaults accessible via package level functions. You can create your own
+// Renderer for custom formats, or create new handlers that support custom
+// formats.
 package render
 
 import (
@@ -26,36 +32,11 @@ var (
 	// due to the value not supporting the format, or the value itself not being
 	// renderable. Only Renderer implementations should return this error.
 	ErrCannotRender = fmt.Errorf("%w: cannot render", Err)
-)
 
-// FormatRenderer interface is for single format renderers, which can only
-// render a single format.
-type FormatRenderer interface {
-	// Render writes v into w in the format that the FormatRenderer supports.
-	//
-	// If v does not implement a required interface, or otherwise cannot be
-	// rendered to the format in question, then a ErrCannotRender error must be
-	// returned. Any other errors should be returned as is.
-	Render(w io.Writer, v any) error
-}
-
-// Formats is an optional interface that can be implemented by FormatRenderer
-// implementations to return a list of formats that the renderer supports. This
-// is used by the NewRenderer function to allowing format aliases like "yml" for
-// "yaml".
-type Formats interface {
-	Formats() []string
-}
-
-var (
-	prettyRenderer = New(map[string]FormatRenderer{
-		"binary": &Binary{},
-		"json":   &JSON{Pretty: true},
-		"text":   &Text{},
-		"xml":    &XML{Pretty: true},
-		"yaml":   &YAML{Indent: 2},
-	})
-	compactRenderer = New(map[string]FormatRenderer{
+	// Base is a renderer that supports all formats. It is used by the package
+	// level NewWith function to create new renderers with a sub-set of
+	// formats.
+	Base = New(map[string]Handler{
 		"binary": &Binary{},
 		"json":   &JSON{},
 		"text":   &Text{},
@@ -63,110 +44,39 @@ var (
 		"yaml":   &YAML{},
 	})
 
-	DefaultPretty  = prettyRenderer.OnlyWith("json", "text", "xml", "yaml")
-	DefaultCompact = compactRenderer.OnlyWith("json", "text", "xml", "yaml")
+	// Default is the default renderer that is used by package level Render,
+	// Compact, Pretty functions. It supports JSON, Text, and YAML formats.
+	Default = Base.NewWith("json", "text", "yaml")
 )
 
-// Render renders the given value to the given writer using the given format.
-// If pretty is true, the value will be rendered in a pretty way, otherwise it
-// will be rendered in a compact way.
+// Render renders the given value to the given writer using the given format. If
+// pretty is true, the value will be rendered "pretty" if the target format
+// supports it, otherwise it will be rendered in a compact way.
 //
-// By default it supports the following formats:
+// It uses the default renderer to render the value, which supports JSON, Text,
+// and YAML formats out of the box.
 //
-//   - "text": Renders values via a myriad of ways.
-//   - "json": Renders values using the encoding/json package.
-//   - "yaml": Renders values using the gopkg.in/yaml.v3 package.
-//   - "xml": Renders values using the encoding/xml package.
-//
-// If the format is not supported, a ErrUnsupportedFormat error will be
-// returned.
+// If you need to support a custom set of formats, use the New function to
+// create a new Renderer with the formats you need. If you need new custom
+// renderers, manually create a new Renderer.
 func Render(w io.Writer, format string, pretty bool, v any) error {
-	if pretty {
-		return DefaultPretty.Render(w, format, v)
-	}
-
-	return DefaultCompact.Render(w, format, v)
+	return Default.Render(w, format, pretty, v)
 }
 
-// Pretty renders the given value to the given writer using the given format.
-// The format must be one of the formats supported by the default renderer.
-//
-// By default it supports the following formats:
-//
-//   - "text": Renders values via a myriad of ways.
-//   - "json": Renders values using the encoding/json package, with pretty
-//     printing enabled.
-//   - "yaml": Renders values using the gopkg.in/yaml.v3 package, with an
-//     indentation of 2 spaces.
-//   - "xml": Renders values using the encoding/xml package, with pretty
-//     printing enabled.
-//
-// If the format is not supported, a ErrUnsupportedFormat error will be
-// returned.
-//
-// If you need to support a custom set of formats, use the New function to
-// create a new Renderer with the formats you need. If you need new custom
-// renderers, manually create a new Renderer.
-func Pretty(w io.Writer, format string, v any) error {
-	return DefaultPretty.Render(w, format, v)
-}
-
-// Compact renders the given value to the given writer using the given format.
-// The format must be one of the formats supported by the default renderer.
-//
-// By default it supports the following formats:
-//
-//   - "text": Renders values via a myriad of ways..
-//   - "json": Renders values using the encoding/json package.
-//   - "yaml": Renders values using the gopkg.in/yaml.v3 package.
-//   - "xml": Renders values using the encoding/xml package.
-//
-// If the format is not supported, a ErrUnsupportedFormat error will be
-// returned.
-//
-// If you need to support a custom set of formats, use the New function to
-// create a new Renderer with the formats you need. If you need new custom
-// renderers, manually create a new Renderer.
+// Compact is a convenience function that calls the Default renderer's Compact
+// method. It is the same as calling Render with pretty set to false.
 func Compact(w io.Writer, format string, v any) error {
-	return DefaultCompact.Render(w, format, v)
+	return Default.Compact(w, format, v)
 }
 
-// NewCompact returns a new renderer which only supports the specified formats
-// and renders structured formats compactly. If no formats are specified, a
-// error is returned.
-//
-// If any of the formats are not supported by, a ErrUnsupported error is
-// returned.
-func NewCompact(formats ...string) (*Renderer, error) {
-	if len(formats) == 0 {
-		return nil, fmt.Errorf("%w: no formats specified", Err)
-	}
-
-	for _, format := range formats {
-		if _, ok := compactRenderer.Renderers[format]; !ok {
-			return nil, fmt.Errorf("%w: %s", ErrUnsupportedFormat, format)
-		}
-	}
-
-	return compactRenderer.OnlyWith(formats...), nil
+// Pretty is a convenience function that calls the Default renderer's Pretty
+// method. It is the same as calling Render with pretty set to true.
+func Pretty(w io.Writer, format string, v any) error {
+	return Default.Pretty(w, format, v)
 }
 
-// NewPretty returns a new renderer which only supports the specified formats
-// and renders structured formats in a pretty way. If no formats are specified,
-// a error is returned.
-//
-// If any of the formats are not supported by, a ErrUnsupported error is
-// returned.
-func NewPretty(formats ...string) (*Renderer, error) {
-	if len(formats) == 0 {
-		return nil, fmt.Errorf("%w: no formats specified", Err)
-	}
-
-	for _, format := range formats {
-		if _, ok := prettyRenderer.Renderers[format]; !ok {
-			return nil, fmt.Errorf("%w: %s", ErrUnsupportedFormat, format)
-		}
-	}
-
-	return prettyRenderer.OnlyWith(formats...), nil
+// NewWith creates a new Renderer with the given formats. Only formats on the
+// BaseRender will be supported.
+func NewWith(formats ...string) *Renderer {
+	return Base.NewWith(formats...)
 }

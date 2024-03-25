@@ -6,18 +6,22 @@ import (
 	"io"
 )
 
-// Multi is a renderer that tries multiple renderers until one succeeds.
+// Multi is a Handler that tries multiple handlers until one succeeds.
 type Multi struct {
-	Renderers []FormatRenderer
+	Handlers []Handler
 }
 
-var _ FormatRenderer = (*Multi)(nil)
+var (
+	_ Handler        = (*Multi)(nil)
+	_ PrettyHandler  = (*Multi)(nil)
+	_ FormatsHandler = (*Multi)(nil)
+)
 
-// Render tries each renderer in order until one succeeds. If none succeed,
-// ErrCannotRender is returned. If a renderer returns an error that is not
+// Render tries each handler in order until one succeeds. If none succeed,
+// ErrCannotRender is returned. If a handler returns an error that is not
 // ErrCannotRender, that error is returned.
 func (mr *Multi) Render(w io.Writer, v any) error {
-	for _, r := range mr.Renderers {
+	for _, r := range mr.Handlers {
 		err := r.Render(w, v)
 		if err == nil {
 			return nil
@@ -30,11 +34,37 @@ func (mr *Multi) Render(w io.Writer, v any) error {
 	return fmt.Errorf("%w: %T", ErrCannotRender, v)
 }
 
+// RenderPretty tries each handler in order until one succeeds. If none
+// succeed, ErrCannotRender is returned. If a handler returns an error that is
+// not ErrCannotRender, that error is returned.
+//
+// If a handler implements PrettyHandler, then the RenderPretty method is used
+// instead of Render. Otherwise, the Render method is used.
+func (mr *Multi) RenderPretty(w io.Writer, v any) error {
+	for _, r := range mr.Handlers {
+		var err error
+		if x, ok := r.(PrettyHandler); ok {
+			err = x.RenderPretty(w, v)
+		} else {
+			err = r.Render(w, v)
+		}
+		if err == nil {
+			return nil
+		}
+		if !errors.Is(err, ErrCannotRender) {
+			return err
+		}
+	}
+
+	return fmt.Errorf("%w: %T", ErrCannotRender, v)
+}
+
+// Formats returns a list of format strings that this Handler supports.
 func (mr *Multi) Formats() []string {
 	formats := make(map[string]struct{})
 
-	for _, r := range mr.Renderers {
-		if x, ok := r.(Formats); ok {
+	for _, r := range mr.Handlers {
+		if x, ok := r.(FormatsHandler); ok {
 			for _, f := range x.Formats() {
 				formats[f] = struct{}{}
 			}
