@@ -45,17 +45,26 @@ Basic usage to render a value to various formats into a `io.Writer`:
 ```go
 version := &Version{Version: "1.2.1", Stable: true, Latest: false}
 
-// Render version as plain text via fmt.Stringer interface.
 err = render.Pretty(w, "text", version)
+// 1.2.1 (stable: true, latest: false)
 
-// Render version as JSON via marshaling.
 err = render.Pretty(w, "json", version)
+// {
+//   "version": "1.2.1",
+//   "latest": false,
+//   "stable": true
+// }
 
-// Render version as YAML via marshaling.
+err = render.Compact(w, "json", version)
+// {"version":"1.2.1","latest":false,"stable":true}
+
 err = render.Pretty(w, "yaml", version)
+// version: 1.2.1
+// latest: false
+// stable: true
 
-// Render version as XML via marshaling.
 err = render.Pretty(w, "xml", version)
+// <version latest="false" stable="true">1.2.1</version>
 ```
 
 The above assumes the following `Version` struct:
