@@ -11,28 +11,28 @@ import (
 )
 
 func ExampleRender_json() {
-	type Role struct {
-		Name string `json:"name" yaml:"name" xml:"name"`
-		Icon string `json:"icon" yaml:"icon" xml:"icon"`
+	type Version struct {
+		Version string `json:"version" yaml:"version" xml:",chardata"`
+		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
+		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
 	}
 
-	type User struct {
-		Name  string   `json:"name" yaml:"name" xml:"name"`
-		Age   int      `json:"age" yaml:"age" xml:"age"`
-		Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
-		Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
+	type OutputList struct {
+		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
-		XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
 	}
 
-	data := &User{
-		Name: "John Doe",
-		Age:  30,
-		Roles: []*Role{
-			{Name: "admin", Icon: "shield"},
-			{Name: "developer", Icon: "keyboard"},
+	data := &OutputList{
+		Current: "1.2.2",
+		Versions: []Version{
+			{Version: "1.2.2", Stable: true, Latest: true},
+			{Version: "1.2.1", Stable: true},
+			{Version: "1.2.0", Stable: true},
+			{Version: "1.2.0-rc.0", Stable: false},
+			{Version: "1.1.0", Stable: true},
 		},
-		Tags: []string{"golang", "json", "yaml", "toml"},
 	}
 
 	// Render the object to JSON.
@@ -45,50 +45,60 @@ func ExampleRender_json() {
 
 	// Output:
 	// {
-	//   "name": "John Doe",
-	//   "age": 30,
-	//   "roles": [
+	//   "current": "1.2.2",
+	//   "versions": [
 	//     {
-	//       "name": "admin",
-	//       "icon": "shield"
+	//       "version": "1.2.2",
+	//       "latest": true,
+	//       "stable": true
 	//     },
 	//     {
-	//       "name": "developer",
-	//       "icon": "keyboard"
+	//       "version": "1.2.1",
+	//       "latest": false,
+	//       "stable": true
+	//     },
+	//     {
+	//       "version": "1.2.0",
+	//       "latest": false,
+	//       "stable": true
+	//     },
+	//     {
+	//       "version": "1.2.0-rc.0",
+	//       "latest": false,
+	//       "stable": false
+	//     },
+	//     {
+	//       "version": "1.1.0",
+	//       "latest": false,
+	//       "stable": true
 	//     }
-	//   ],
-	//   "tags": [
-	//     "golang",
-	//     "json",
-	//     "yaml",
-	//     "toml"
 	//   ]
 	// }
 }
 
 func ExampleRender_yaml() {
-	type Role struct {
-		Name string `json:"name" yaml:"name" xml:"name"`
-		Icon string `json:"icon" yaml:"icon" xml:"icon"`
+	type Version struct {
+		Version string `json:"version" yaml:"version" xml:",chardata"`
+		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
+		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
 	}
 
-	type User struct {
-		Name  string   `json:"name" yaml:"name" xml:"name"`
-		Age   int      `json:"age" yaml:"age" xml:"age"`
-		Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
-		Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
+	type OutputList struct {
+		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
-		XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
 	}
 
-	data := &User{
-		Name: "John Doe",
-		Age:  30,
-		Roles: []*Role{
-			{Name: "admin", Icon: "shield"},
-			{Name: "developer", Icon: "keyboard"},
+	data := &OutputList{
+		Current: "1.2.2",
+		Versions: []Version{
+			{Version: "1.2.2", Stable: true, Latest: true},
+			{Version: "1.2.1", Stable: true},
+			{Version: "1.2.0", Stable: true},
+			{Version: "1.2.0-rc.0", Stable: false},
+			{Version: "1.1.0", Stable: true},
 		},
-		Tags: []string{"golang", "json", "yaml", "toml"},
 	}
 
 	// Render the object to YAML.
@@ -100,43 +110,48 @@ func ExampleRender_yaml() {
 	fmt.Println(buf.String())
 
 	// Output:
-	// name: John Doe
-	// age: 30
-	// roles:
-	//   - name: admin
-	//     icon: shield
-	//   - name: developer
-	//     icon: keyboard
-	// tags:
-	//   - golang
-	//   - json
-	//   - yaml
-	//   - toml
+	// current: 1.2.2
+	// versions:
+	//   - version: 1.2.2
+	//     latest: true
+	//     stable: true
+	//   - version: 1.2.1
+	//     latest: false
+	//     stable: true
+	//   - version: 1.2.0
+	//     latest: false
+	//     stable: true
+	//   - version: 1.2.0-rc.0
+	//     latest: false
+	//     stable: false
+	//   - version: 1.1.0
+	//     latest: false
+	//     stable: true
 }
 
 func ExampleRender_xml() {
-	type Role struct {
-		Name string `json:"name" yaml:"name" xml:"name"`
-		Icon string `json:"icon" yaml:"icon" xml:"icon"`
+	type Version struct {
+		Version string `json:"version" yaml:"version" xml:",chardata"`
+		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
+		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
 	}
 
-	type User struct {
-		Name  string   `json:"name" yaml:"name" xml:"name"`
-		Age   int      `json:"age" yaml:"age" xml:"age"`
-		Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
-		Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
+	type OutputList struct {
+		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
-		XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
 	}
 
-	data := &User{
-		Name: "John Doe",
-		Age:  30,
-		Roles: []*Role{
-			{Name: "admin", Icon: "shield"},
-			{Name: "developer", Icon: "keyboard"},
+	data := &OutputList{
+		Current: "1.2.2",
+		Versions: []Version{
+			{Version: "1.2.2", Stable: true, Latest: true},
+			{Version: "1.2.1", Stable: true},
+			{Version: "1.2.0", Stable: true},
+			{Version: "1.2.0-rc.0", Stable: false},
+			{Version: "1.1.0", Stable: true},
 		},
-		Tags: []string{"golang", "json", "yaml", "toml"},
 	}
 
 	// Create a new renderer that supports XML in addition to the default JSON,
@@ -152,50 +167,14 @@ func ExampleRender_xml() {
 	fmt.Println(buf.String())
 
 	// Output:
-	// <user>
-	//   <name>John Doe</name>
-	//   <age>30</age>
-	//   <roles>
-	//     <name>admin</name>
-	//     <icon>shield</icon>
-	//   </roles>
-	//   <roles>
-	//     <name>developer</name>
-	//     <icon>keyboard</icon>
-	//   </roles>
-	//   <tags>golang</tags>
-	//   <tags>json</tags>
-	//   <tags>yaml</tags>
-	//   <tags>toml</tags>
-	// </user>
-}
-
-type Role struct {
-	Name string `json:"name" yaml:"name" xml:"name"`
-	Icon string `json:"icon" yaml:"icon" xml:"icon"`
-}
-
-func (r *Role) WriteTo(w io.Writer) (int64, error) {
-	s := fmt.Sprintf("%s (%s)", r.Name, r.Icon)
-	n, err := w.Write([]byte(s))
-
-	return int64(n), err
-}
-
-type User struct {
-	Name  string   `json:"name" yaml:"name" xml:"name"`
-	Age   int      `json:"age" yaml:"age" xml:"age"`
-	Roles []*Role  `json:"roles" yaml:"roles" xml:"roles"`
-	Tags  []string `json:"tags" yaml:"tags" xml:"tags"`
-
-	XMLName xml.Name `json:"-" yaml:"-" xml:"user"`
-}
-
-func (u *User) String() string {
-	return fmt.Sprintf(
-		"%s (%d): %s",
-		u.Name, u.Age, strings.Join(u.Tags, ", "),
-	)
+	// <versions-list>
+	//   <current>1.2.2</current>
+	//   <version latest="true" stable="true">1.2.2</version>
+	//   <version latest="false" stable="true">1.2.1</version>
+	//   <version latest="false" stable="true">1.2.0</version>
+	//   <version latest="false" stable="false">1.2.0-rc.0</version>
+	//   <version latest="false" stable="true">1.1.0</version>
+	// </versions-list>
 }
 
 func ExampleRender_textFromByteSlice() {
@@ -244,19 +223,21 @@ func ExampleRender_textFromIOReader() {
 }
 
 func ExampleRender_textFromWriterTo() {
-	// The Role struct has a WriteTo method which writes a string representation
-	// of a role to an io.Writer:
+	// The Version struct has a WriteTo method which writes a string
+	// representation of a version to an io.Writer:
 	//
-	//	func (r *Role) WriteTo(w io.Writer) (int64, error) {
-	//		s := fmt.Sprintf("%s (%s)", r.Name, r.Icon)
+	//	func (v *Version) WriteTo(w io.Writer) (int64, error) {
+	//		s := fmt.Sprintf(
+	//			"%s (stable: %t, latest: %t)", v.Version, v.Stable, v.Latest,
+	//		)
 	//		n, err := w.Write([]byte(s))
 	//
 	//		return int64(n), err
 	//	}
 
-	data := &Role{Name: "admin", Icon: "shield"}
+	data := &Version{Version: "1.2.1", Stable: true, Latest: false}
 
-	// Render the object to XML.
+	// Render the object to text.
 	buf := &bytes.Buffer{}
 	err := render.Pretty(buf, "text", data)
 	if err != nil {
@@ -265,28 +246,92 @@ func ExampleRender_textFromWriterTo() {
 	fmt.Println(buf.String())
 
 	// Output:
-	// admin (shield)
+	// 1.2.1 (stable: true, latest: false)
+}
+
+type Version struct {
+	Version string `json:"version" yaml:"version" xml:",chardata"`
+	Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
+	Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+}
+
+func (v *Version) WriteTo(w io.Writer) (int64, error) {
+	s := fmt.Sprintf(
+		"%s (stable: %t, latest: %t)", v.Version, v.Stable, v.Latest,
+	)
+	n, err := w.Write([]byte(s))
+
+	return int64(n), err
+}
+
+type OutputList struct {
+	Current  string    `json:"current" yaml:"current" xml:"current"`
+	Versions []Version `json:"versions" yaml:"versions" xml:"version"`
+
+	XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
+}
+
+func (ol *OutputList) String() string {
+	buf := &strings.Builder{}
+
+	for _, ver := range ol.Versions {
+		if ol.Current == ver.Version {
+			buf.WriteString("* ")
+		} else {
+			buf.WriteString("  ")
+		}
+
+		buf.WriteString(ver.Version)
+		if !ver.Stable {
+			buf.WriteString(" (pre-release)")
+		}
+		if ver.Latest {
+			buf.WriteString(" (latest)")
+		}
+
+		buf.WriteByte('\n')
+	}
+
+	return buf.String()
 }
 
 func ExampleRender_textFromStringer() {
 	// The User struct has a String method which returns a string representation
 	// of a user:
 	//
-	//	func (u *User) String() string {
-	//		return fmt.Sprintf(
-	//			"%s (%d): %s",
-	//			u.Name, u.Age, strings.Join(u.Tags, ", "),
-	//		)
+	//	func (ol *OutputList) String() string {
+	//		buf := &strings.Builder{}
+	//
+	//		for _, ver := range ol.Versions {
+	//			if ol.Current == ver.Version {
+	//				buf.WriteString("* ")
+	//			} else {
+	//				buf.WriteString("  ")
+	//			}
+	//
+	//			buf.WriteString(ver.Version)
+	//			if !ver.Stable {
+	//				buf.WriteString(" (pre-release)")
+	//			}
+	//			if ver.Latest {
+	//				buf.WriteString(" (latest)")
+	//			}
+	//
+	//			buf.WriteByte('\n')
+	//		}
+	//
+	//		return buf.String()
 	//	}
 
-	data := &User{
-		Name: "John Doe",
-		Age:  30,
-		Roles: []*Role{
-			{Name: "admin", Icon: "shield"},
-			{Name: "developer", Icon: "keyboard"},
+	data := &OutputList{
+		Current: "1.2.2",
+		Versions: []Version{
+			{Version: "1.2.2", Stable: true, Latest: true},
+			{Version: "1.2.1", Stable: true},
+			{Version: "1.2.0", Stable: true},
+			{Version: "1.2.0-rc.0", Stable: false},
+			{Version: "1.1.0", Stable: true},
 		},
-		Tags: []string{"golang", "json", "yaml", "toml"},
 	}
 
 	// Render the object to XML.
@@ -298,5 +343,9 @@ func ExampleRender_textFromStringer() {
 	fmt.Println(buf.String())
 
 	// Output:
-	// John Doe (30): golang, json, yaml, toml
+	// * 1.2.2 (latest)
+	//   1.2.1
+	//   1.2.0
+	//   1.2.0-rc.0 (pre-release)
+	//   1.1.0
 }
