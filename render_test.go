@@ -492,15 +492,38 @@ var yamlFormatTestCases = []renderFormatTestCase{
 		want: "user:\n  age: 30\n  name: John Doe\n",
 	},
 	{
-		name:    "yaml format with yaml.Marshaler",
+		name: "yaml format with sequences",
+		value: map[string]any{
+			"books": []string{
+				"The Great Gatsby",
+				"1984",
+			},
+		},
+		want: "books:\n  - The Great Gatsby\n  - \"1984\"\n",
+	},
+	{
+		name:    "yaml format with yaml.InterfaceMarshaler",
 		formats: []string{"yaml", "yml"},
-		value:   &mockYAMLMarshaler{val: map[string]int{"age": 30}},
+		value:   &mockYAMLInterfaceMarshaler{val: map[string]int{"age": 30}},
 		want:    "age: 30\n",
 	},
 	{
-		name:      "yaml format with error from yaml.Marshaler",
+		name:      "yaml format with error from yaml.InterfaceMarshaler",
 		formats:   []string{"yaml", "yml"},
-		value:     &mockYAMLMarshaler{err: errors.New("mock error")},
+		value:     &mockYAMLInterfaceMarshaler{err: errors.New("mock error")},
+		wantErr:   "render: failed: mock error",
+		wantErrIs: []error{Err, ErrFailed},
+	},
+	{
+		name:    "yaml format with yaml.BytesMarshaler",
+		formats: []string{"yaml", "yml"},
+		value:   &mockYAMLBytesMarshaler{val: []byte("age: 30\n")},
+		want:    "age: 30\n",
+	},
+	{
+		name:      "yaml format with error from yaml.BytesMarshaler",
+		formats:   []string{"yaml", "yml"},
+		value:     &mockYAMLBytesMarshaler{err: errors.New("mock error")},
 		wantErr:   "render: failed: mock error",
 		wantErrIs: []error{Err, ErrFailed},
 	},
@@ -516,7 +539,8 @@ var yamlFormatTestCases = []renderFormatTestCase{
 		name:      "yaml format with invalid type",
 		formats:   []string{"yaml", "yml"},
 		value:     make(chan int),
-		wantPanic: "cannot marshal type: chan int",
+		wantErr:   "render: failed: unknown value type chan int",
+		wantErrIs: []error{Err, ErrFailed},
 	},
 }
 
