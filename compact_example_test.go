@@ -13,12 +13,12 @@ import (
 func ExampleCompact_json() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
@@ -47,12 +47,12 @@ func ExampleCompact_json() {
 func ExampleCompact_yaml() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
@@ -98,12 +98,12 @@ func ExampleCompact_yaml() {
 func ExampleCompact_xml() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`

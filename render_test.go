@@ -132,7 +132,7 @@ type renderFormatTestCase struct {
 }
 
 // "binary" format.
-var binaryFormattestCases = []renderFormatTestCase{
+var binaryFormatTestCases = []renderFormatTestCase{
 	{
 		name:    "with binary marshaler",
 		formats: []string{"binary", "bin"},

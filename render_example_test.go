@@ -12,8 +12,8 @@ import (
 
 type Version struct {
 	Version string `json:"version" yaml:"version" xml:",chardata"`
-	Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-	Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+	Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+	Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 }
 
 func (v *Version) WriteTo(w io.Writer) (int64, error) {
@@ -26,7 +26,7 @@ func (v *Version) WriteTo(w io.Writer) (int64, error) {
 }
 
 type OutputList struct {
-	Current  string    `json:"current" yaml:"current" xml:"current"`
+	Current  string    `json:"current"  yaml:"current"  xml:"current"`
 	Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 	XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
@@ -60,12 +60,12 @@ func (ol *OutputList) String() string {
 func ExampleRender_compactJSON() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
@@ -94,12 +94,12 @@ func ExampleRender_compactJSON() {
 func ExampleRender_compactYAML() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
@@ -145,12 +145,12 @@ func ExampleRender_compactYAML() {
 func ExampleRender_compactXML() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
@@ -295,12 +295,12 @@ func ExampleRender_compactTextFromStringer() {
 func ExampleRender_prettyJSON() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
@@ -358,12 +358,12 @@ func ExampleRender_prettyJSON() {
 func ExampleRender_prettyYAML() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`
@@ -408,12 +408,12 @@ func ExampleRender_prettyYAML() {
 func ExampleRender_prettyXML() {
 	type Version struct {
 		Version string `json:"version" yaml:"version" xml:",chardata"`
-		Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-		Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+		Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+		Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 	}
 
 	type OutputList struct {
-		Current  string    `json:"current" yaml:"current" xml:"current"`
+		Current  string    `json:"current"  yaml:"current"  xml:"current"`
 		Versions []Version `json:"versions" yaml:"versions" xml:"version"`
 
 		XMLName xml.Name `json:"-" yaml:"-" xml:"versions-list"`

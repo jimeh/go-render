@@ -3,7 +3,7 @@ package render
 import "io"
 
 // Handler interface is for single format renderers, which can only render a
-// single format. It is the basis of the multi-format support offerred by the
+// single format. It is the basis of the multi-format support offered by the
 // render package.
 type Handler interface {
 	// Render writes v into w in the format that the Handler supports.

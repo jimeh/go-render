@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// Binary can render values which implment the encoding.BinaryMarshaler
+// Binary can render values which implement the encoding.BinaryMarshaler
 // interface.
 type Binary struct{}
 
@@ -15,8 +15,8 @@ var (
 	_ FormatsHandler = (*Binary)(nil)
 )
 
-// Render writes result of calling MarshalBinary() on v. If v does not implment
-// encoding.BinaryMarshaler the ErrCannotRander error will be returned.
+// Render writes result of calling MarshalBinary() on v. If v does not implement
+// encoding.BinaryMarshaler the ErrCannotRender error will be returned.
 func (br *Binary) Render(w io.Writer, v any) error {
 	x, ok := v.(encoding.BinaryMarshaler)
 	if !ok {
