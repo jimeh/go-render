@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// mockWriter is a mock implementation of io.Writer.
 type mockWriter struct {
 	WriteErr error
 	buf      bytes.Buffer
@@ -30,6 +31,7 @@ func (mw *mockWriter) String() string {
 	return mw.buf.String()
 }
 
+// mockHandler is a mock implementation of Handler.
 type mockHandler struct {
 	output  string
 	formats []string
@@ -55,6 +57,7 @@ func (mh *mockHandler) Formats() []string {
 	return mh.formats
 }
 
+// mockPrettyHandler is a mock implementation of PrettyHandler.
 type mockPrettyHandler struct {
 	output       string
 	prettyOutput string
@@ -92,6 +95,7 @@ func (mph *mockPrettyHandler) Formats() []string {
 	return mph.formats
 }
 
+// mockFormatsHandler is a mock implementation of FormatsHandler.
 type mockFormatsHandler struct {
 	output  string
 	formats []string
@@ -128,7 +132,6 @@ type renderFormatTestCase struct {
 	wantCompact string
 	wantErr     string
 	wantErrIs   []error
-	wantPanic   string
 }
 
 // "binary" format.
@@ -492,15 +495,38 @@ var yamlFormatTestCases = []renderFormatTestCase{
 		want: "user:\n  age: 30\n  name: John Doe\n",
 	},
 	{
-		name:    "yaml format with yaml.Marshaler",
+		name: "yaml format with sequences",
+		value: map[string]any{
+			"books": []string{
+				"The Great Gatsby",
+				"1984",
+			},
+		},
+		want: "books:\n  - The Great Gatsby\n  - \"1984\"\n",
+	},
+	{
+		name:    "yaml format with yaml.InterfaceMarshaler",
 		formats: []string{"yaml", "yml"},
-		value:   &mockYAMLMarshaler{val: map[string]int{"age": 30}},
+		value:   &mockYAMLInterfaceMarshaler{val: map[string]int{"age": 30}},
 		want:    "age: 30\n",
 	},
 	{
-		name:      "yaml format with error from yaml.Marshaler",
+		name:      "yaml format with error from yaml.InterfaceMarshaler",
 		formats:   []string{"yaml", "yml"},
-		value:     &mockYAMLMarshaler{err: errors.New("mock error")},
+		value:     &mockYAMLInterfaceMarshaler{err: errors.New("mock error")},
+		wantErr:   "render: failed: mock error",
+		wantErrIs: []error{Err, ErrFailed},
+	},
+	{
+		name:    "yaml format with yaml.BytesMarshaler",
+		formats: []string{"yaml", "yml"},
+		value:   &mockYAMLBytesMarshaler{val: []byte("age: 30\n")},
+		want:    "age: 30\n",
+	},
+	{
+		name:      "yaml format with error from yaml.BytesMarshaler",
+		formats:   []string{"yaml", "yml"},
+		value:     &mockYAMLBytesMarshaler{err: errors.New("mock error")},
 		wantErr:   "render: failed: mock error",
 		wantErrIs: []error{Err, ErrFailed},
 	},
@@ -516,7 +542,8 @@ var yamlFormatTestCases = []renderFormatTestCase{
 		name:      "yaml format with invalid type",
 		formats:   []string{"yaml", "yml"},
 		value:     make(chan int),
-		wantPanic: "cannot marshal type: chan int",
+		wantErr:   "render: failed: unknown value type chan int",
+		wantErrIs: []error{Err, ErrFailed},
 	},
 }
 
@@ -542,18 +569,6 @@ func TestRender(t *testing.T) {
 						value = tt.valueFunc()
 					}
 
-					var err error
-					var panicRes any
-					func() {
-						defer func() {
-							if r := recover(); r != nil {
-								panicRes = r
-							}
-						}()
-						err = Render(w, format, pretty, value)
-					}()
-
-					got := w.String()
 					want := tt.want
 					if pretty && tt.wantPretty != "" {
 						want = tt.wantPretty
@@ -561,9 +576,8 @@ func TestRender(t *testing.T) {
 						want = tt.wantCompact
 					}
 
-					if tt.wantPanic != "" {
-						assert.Equal(t, tt.wantPanic, panicRes)
-					}
+					err := Render(w, format, pretty, value)
+					got := w.String()
 
 					if tt.wantErr != "" {
 						wantErr := strings.ReplaceAll(
@@ -575,8 +589,7 @@ func TestRender(t *testing.T) {
 						assert.ErrorIs(t, err, e)
 					}
 
-					if tt.wantPanic == "" &&
-						tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+					if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
 						assert.NoError(t, err)
 						assert.Equal(t, want, got)
 					}
@@ -602,28 +615,15 @@ func TestPretty(t *testing.T) {
 					value = tt.valueFunc()
 				}
 
-				var err error
-				var panicRes any
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							panicRes = r
-						}
-					}()
-					err = Pretty(w, format, value)
-				}()
-
-				got := w.String()
-				var want string
-				if tt.wantPretty == "" && tt.wantCompact == "" {
-					want = tt.want
-				} else {
+				want := tt.want
+				if tt.wantPretty != "" {
 					want = tt.wantPretty
+				} else if tt.wantCompact != "" {
+					want = tt.wantCompact
 				}
 
-				if tt.wantPanic != "" {
-					assert.Equal(t, tt.wantPanic, panicRes)
-				}
+				err := Pretty(w, format, value)
+				got := w.String()
 
 				if tt.wantErr != "" {
 					wantErr := strings.ReplaceAll(
@@ -635,8 +635,7 @@ func TestPretty(t *testing.T) {
 					assert.ErrorIs(t, err, e)
 				}
 
-				if tt.wantPanic == "" &&
-					tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+				if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
 					assert.NoError(t, err)
 					assert.Equal(t, want, got)
 				}
@@ -661,28 +660,15 @@ func TestCompact(t *testing.T) {
 					value = tt.valueFunc()
 				}
 
-				var err error
-				var panicRes any
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							panicRes = r
-						}
-					}()
-					err = Compact(w, format, value)
-				}()
-
-				got := w.String()
-				var want string
-				if tt.wantPretty == "" && tt.wantCompact == "" {
-					want = tt.want
-				} else {
+				want := tt.want
+				if tt.wantPretty != "" {
+					want = tt.wantPretty
+				} else if tt.wantCompact != "" {
 					want = tt.wantCompact
 				}
 
-				if tt.wantPanic != "" {
-					assert.Equal(t, tt.wantPanic, panicRes)
-				}
+				err := Compact(w, format, value)
+				got := w.String()
 
 				if tt.wantErr != "" {
 					wantErr := strings.ReplaceAll(
@@ -694,8 +680,7 @@ func TestCompact(t *testing.T) {
 					assert.ErrorIs(t, err, e)
 				}
 
-				if tt.wantPanic == "" &&
-					tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+				if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
 					assert.NoError(t, err)
 					assert.Equal(t, want, got)
 				}

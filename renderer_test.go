@@ -493,19 +493,6 @@ func TestRenderer_RenderAllFormats(t *testing.T) {
 						value = tt.valueFunc()
 					}
 
-					var err error
-					var panicRes any
-
-					func() {
-						defer func() {
-							if r := recover(); r != nil {
-								panicRes = r
-							}
-						}()
-						err = Base.Render(w, format, pretty, value)
-					}()
-
-					got := w.String()
 					want := tt.want
 					if pretty && tt.wantPretty != "" {
 						want = tt.wantPretty
@@ -513,9 +500,8 @@ func TestRenderer_RenderAllFormats(t *testing.T) {
 						want = tt.wantCompact
 					}
 
-					if tt.wantPanic != "" {
-						assert.Equal(t, tt.wantPanic, panicRes)
-					}
+					err := Base.Render(w, format, pretty, value)
+					got := w.String()
 
 					if tt.wantErr != "" {
 						wantErr := strings.ReplaceAll(
@@ -527,8 +513,7 @@ func TestRenderer_RenderAllFormats(t *testing.T) {
 						assert.ErrorIs(t, err, e)
 					}
 
-					if tt.wantPanic == "" &&
-						tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+					if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
 						assert.NoError(t, err)
 						assert.Equal(t, want, got)
 					}
@@ -556,19 +541,6 @@ func TestRenderer_CompactAllFormats(t *testing.T) {
 					value = tt.valueFunc()
 				}
 
-				var err error
-				var panicRes any
-
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							panicRes = r
-						}
-					}()
-					err = Base.Compact(w, format, value)
-				}()
-
-				got := w.String()
 				var want string
 				if tt.wantPretty == "" && tt.wantCompact == "" {
 					want = tt.want
@@ -576,9 +548,8 @@ func TestRenderer_CompactAllFormats(t *testing.T) {
 					want = tt.wantCompact
 				}
 
-				if tt.wantPanic != "" {
-					assert.Equal(t, tt.wantPanic, panicRes)
-				}
+				err := Base.Compact(w, format, value)
+				got := w.String()
 
 				if tt.wantErr != "" {
 					wantErr := strings.ReplaceAll(
@@ -590,8 +561,7 @@ func TestRenderer_CompactAllFormats(t *testing.T) {
 					assert.ErrorIs(t, err, e)
 				}
 
-				if tt.wantPanic == "" &&
-					tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+				if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
 					assert.NoError(t, err)
 					assert.Equal(t, want, got)
 				}
@@ -618,19 +588,6 @@ func TestRenderer_PrettyAllFormats(t *testing.T) {
 					value = tt.valueFunc()
 				}
 
-				var err error
-				var panicRes any
-
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							panicRes = r
-						}
-					}()
-					err = Base.Pretty(w, format, value)
-				}()
-
-				got := w.String()
 				var want string
 				if tt.wantPretty == "" && tt.wantCompact == "" {
 					want = tt.want
@@ -638,9 +595,8 @@ func TestRenderer_PrettyAllFormats(t *testing.T) {
 					want = tt.wantPretty
 				}
 
-				if tt.wantPanic != "" {
-					assert.Equal(t, tt.wantPanic, panicRes)
-				}
+				err := Base.Pretty(w, format, value)
+				got := w.String()
 
 				if tt.wantErr != "" {
 					wantErr := strings.ReplaceAll(
@@ -652,8 +608,7 @@ func TestRenderer_PrettyAllFormats(t *testing.T) {
 					assert.ErrorIs(t, err, e)
 				}
 
-				if tt.wantPanic == "" &&
-					tt.wantErr == "" && len(tt.wantErrIs) == 0 {
+				if tt.wantErr == "" && len(tt.wantErrIs) == 0 {
 					assert.NoError(t, err)
 					assert.Equal(t, want, got)
 				}
