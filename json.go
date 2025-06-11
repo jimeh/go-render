@@ -6,9 +6,9 @@ import (
 	"io"
 )
 
-// JSONDefualtIndent is the default indentation string used by JSON instances
+// JSONDefaultIndent is the default indentation string used by JSON instances
 // when pretty rendering if no Indent value is set on the JSON instance itself.
-var JSONDefualtIndent = "  "
+var JSONDefaultIndent = "  "
 
 // JSON is a Handler that marshals values to JSON.
 type JSON struct {
@@ -17,7 +17,7 @@ type JSON struct {
 	Prefix string
 
 	// Indent is the string added to each level of indentation when pretty
-	// rendering. If empty, two spaces will be used instead.
+	// rendering. If empty, JSONDefaultIndent will be used.
 	Indent string
 }
 
@@ -43,7 +43,7 @@ func (jr *JSON) RenderPretty(w io.Writer, v any) error {
 	prefix := jr.Prefix
 	indent := jr.Indent
 	if indent == "" {
-		indent = JSONDefualtIndent
+		indent = JSONDefaultIndent
 	}
 
 	enc := json.NewEncoder(w)
