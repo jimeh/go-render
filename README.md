@@ -73,8 +73,8 @@ The above assumes the following `Version` struct:
 ```go
 type Version struct {
     Version string `json:"version" yaml:"version" xml:",chardata"`
-    Latest  bool   `json:"latest" yaml:"latest" xml:"latest,attr"`
-    Stable  bool   `json:"stable" yaml:"stable" xml:"stable,attr"`
+    Latest  bool   `json:"latest"  yaml:"latest"  xml:"latest,attr"`
+    Stable  bool   `json:"stable"  yaml:"stable"  xml:"stable,attr"`
 }
 
 func (v *Version) String() string {

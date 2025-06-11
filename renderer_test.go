@@ -112,13 +112,13 @@ func TestRenderer_Add(t *testing.T) {
 			want:    []string{"tackle"},
 		},
 		{
-			name:    "hander with Formats",
+			name:    "handler with Formats",
 			format:  "hackle",
 			handler: &mockFormatsHandler{formats: []string{"hackle"}},
 			want:    []string{"hackle"},
 		},
 		{
-			name:    "hander with alias formats",
+			name:    "handler with alias formats",
 			format:  "hackle",
 			handler: &mockFormatsHandler{formats: []string{"hackle", "hack"}},
 			want:    []string{"hackle", "hack"},
@@ -471,7 +471,7 @@ func TestRenderer_Pretty(t *testing.T) {
 
 func TestRenderer_RenderAllFormats(t *testing.T) {
 	tests := []renderFormatTestCase{}
-	tests = append(tests, binaryFormattestCases...)
+	tests = append(tests, binaryFormatTestCases...)
 	tests = append(tests, jsonFormatTestCases...)
 	tests = append(tests, textFormatTestCases...)
 	tests = append(tests, xmlFormatTestCases...)
@@ -540,7 +540,7 @@ func TestRenderer_RenderAllFormats(t *testing.T) {
 
 func TestRenderer_CompactAllFormats(t *testing.T) {
 	tests := []renderFormatTestCase{}
-	tests = append(tests, binaryFormattestCases...)
+	tests = append(tests, binaryFormatTestCases...)
 	tests = append(tests, jsonFormatTestCases...)
 	tests = append(tests, textFormatTestCases...)
 	tests = append(tests, xmlFormatTestCases...)
@@ -602,7 +602,7 @@ func TestRenderer_CompactAllFormats(t *testing.T) {
 
 func TestRenderer_PrettyAllFormats(t *testing.T) {
 	tests := []renderFormatTestCase{}
-	tests = append(tests, binaryFormattestCases...)
+	tests = append(tests, binaryFormatTestCases...)
 	tests = append(tests, jsonFormatTestCases...)
 	tests = append(tests, textFormatTestCases...)
 	tests = append(tests, xmlFormatTestCases...)

@@ -105,7 +105,7 @@ func (r *Renderer) Pretty(w io.Writer, format string, v any) error {
 }
 
 // NewWith creates a new Renderer with the formats given, if they have handlers
-// in the currener Renderer. It essentially allows to restrict a Renderer to a
+// in the current Renderer. It essentially allows to restrict a Renderer to a
 // only a sub-set of supported formats.
 func (r *Renderer) NewWith(formats ...string) *Renderer {
 	handlers := make(map[string]Handler, len(formats))
