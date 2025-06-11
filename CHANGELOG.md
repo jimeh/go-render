@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.0](https://github.com/jimeh/go-render/compare/v0.0.2...v0.1.0) (2025-06-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* **json:** Rename `JSONDefualtIndent` to correctly spelled `JSONDefaultIndent`.
+* **xml:** Rename `XMLDefualtIndent` to correctly spelled `XMLDefaultIndent`.
+
+### Bug Fixes
+
+* **json:** correct spelling of JSONDefaultIndent ([#7](https://github.com/jimeh/go-render/issues/7)) ([e85261d](https://github.com/jimeh/go-render/commit/e85261d0c603a6fd8e13e764a4da598a51a57353))
+* **makefile:** update golangci-lint import path to v2 module ([#13](https://github.com/jimeh/go-render/issues/13)) ([25d14bd](https://github.com/jimeh/go-render/commit/25d14bd5e4730b02961b8c2729073e65e85eb504))
+* **xml:** correct spelling of XMLDefaultIndent ([#6](https://github.com/jimeh/go-render/issues/6)) ([2fb5fea](https://github.com/jimeh/go-render/commit/2fb5fea7fb9838c08c085d7fd4f08838b99d2d0a))
+
 ## [0.0.2](https://github.com/jimeh/go-render/compare/v0.0.1...v0.0.2) (2024-03-25)
 
 
